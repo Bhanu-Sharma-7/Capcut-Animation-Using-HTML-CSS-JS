@@ -9,123 +9,34 @@ import {
   Modal,
   useWindowDimensions,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
-
-// Base Easy Puzzle (classic unique puzzle)
-const BASE_SOLUTION = [
-  [5, 3, 4, 6, 7, 8, 9, 1, 2],
-  [6, 7, 2, 1, 9, 5, 3, 4, 8],
-  [1, 9, 8, 3, 4, 2, 5, 6, 7],
-  [8, 5, 9, 7, 6, 1, 4, 2, 3],
-  [4, 2, 6, 8, 5, 3, 7, 9, 1],
-  [7, 1, 3, 9, 2, 4, 8, 5, 6],
-  [9, 6, 1, 5, 3, 7, 2, 8, 4],
-  [2, 8, 7, 4, 1, 9, 6, 3, 5],
-  [3, 4, 5, 2, 8, 6, 1, 7, 9],
-];
-
-const BASE_INITIAL = [
-  [5, 3, 0, 0, 7, 0, 0, 0, 0],
-  [6, 0, 0, 1, 9, 5, 0, 0, 0],
-  [0, 9, 8, 0, 0, 0, 0, 6, 0],
-  [8, 0, 0, 0, 6, 0, 0, 0, 3],
-  [4, 0, 0, 8, 0, 3, 0, 0, 1],
-  [7, 0, 0, 0, 2, 0, 0, 0, 6],
-  [0, 6, 0, 0, 0, 0, 2, 8, 0],
-  [0, 0, 0, 4, 1, 9, 0, 0, 5],
-  [0, 0, 0, 0, 8, 0, 0, 7, 9],
-];
-
-interface Cell {
-  value: number;
-  isInitial: boolean;
-  notes: number[];
-  isError: boolean;
-}
-
-interface MoveHistory {
-  row: number;
-  col: number;
-  prevValue: number;
-  prevNotes: number[];
-  prevIsError: boolean;
-}
-
-// Generate valid isomorphic permutations so every "New Game" is fresh
-function createPermutedPuzzle() {
-  const digits = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-  // Shuffle digits for digit mapping
-  const shuffled = [...digits].sort(() => Math.random() - 0.5);
-  const map: Record<number, number> = {};
-  for (let i = 0; i < 9; i++) {
-    map[digits[i]] = shuffled[i];
-  }
-
-  const newInit = BASE_INITIAL.map((row) =>
-    row.map((val) => (val === 0 ? 0 : map[val]))
-  );
-  const newSol = BASE_SOLUTION.map((row) =>
-    row.map((val) => map[val])
-  );
-
-  // Randomly swap rows within 3x3 bands
-  for (let b = 0; b < 3; b++) {
-    const rowIndices = [0, 1, 2].sort(() => Math.random() - 0.5);
-    const bandInit = [newInit[b * 3], newInit[b * 3 + 1], newInit[b * 3 + 2]];
-    const bandSol = [newSol[b * 3], newSol[b * 3 + 1], newSol[b * 3 + 2]];
-    for (let r = 0; r < 3; r++) {
-      newInit[b * 3 + r] = bandInit[rowIndices[r]];
-      newSol[b * 3 + r] = bandSol[rowIndices[r]];
-    }
-  }
-
-  // Randomly swap columns within 3x3 stacks
-  for (let b = 0; b < 3; b++) {
-    const colIndices = [0, 1, 2].sort(() => Math.random() - 0.5);
-    for (let r = 0; r < 9; r++) {
-      const origColsInit = [
-        newInit[r][b * 3],
-        newInit[r][b * 3 + 1],
-        newInit[r][b * 3 + 2],
-      ];
-      const origColsSol = [
-        newSol[r][b * 3],
-        newSol[r][b * 3 + 1],
-        newSol[r][b * 3 + 2],
-      ];
-      for (let c = 0; c < 3; c++) {
-        newInit[r][b * 3 + c] = origColsInit[colIndices[c]];
-        newSol[r][b * 3 + c] = origColsSol[colIndices[c]];
-      }
-    }
-  }
-
-  return { initial: newInit, solution: newSol };
-}
+import {
+  Difficulty,
+  generateSudoku,
+} from './src/utils/sudokuGenerator';
+import { haptic } from './src/utils/haptics';
+import {
+  Cell,
+  MoveHistory,
+  StoredGameState,
+  saveGameState,
+  loadGameState,
+} from './src/utils/storage';
 
 export default function App() {
   const { width, height } = useWindowDimensions();
 
   // Responsive grid dimension calculation
-  // Reserve space for header, status bar, action buttons and numpad
   const maxGridWidth = Math.min(width - 32, height * 0.48, 440);
   const cellSize = Math.floor(maxGridWidth / 9);
   const gridWidth = cellSize * 9;
 
   // Game state
-  const [solutionBoard, setSolutionBoard] = useState<number[][]>(BASE_SOLUTION);
-  const [board, setBoard] = useState<Cell[][]>(() =>
-    BASE_INITIAL.map((row) =>
-      row.map((val) => ({
-        value: val,
-        isInitial: val !== 0,
-        notes: [],
-        isError: false,
-      }))
-    )
-  );
-
+  const [difficulty, setDifficulty] = useState<Difficulty>('Easy');
+  const [solutionBoard, setSolutionBoard] = useState<number[][]>([]);
+  const [board, setBoard] = useState<Cell[][]>([]);
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null);
   const [mistakes, setMistakes] = useState<number>(0);
   const [isNotesMode, setIsNotesMode] = useState<boolean>(false);
@@ -135,15 +46,83 @@ export default function App() {
   const [isVictory, setIsVictory] = useState<boolean>(false);
   const [history, setHistory] = useState<MoveHistory[]>([]);
   const [hintsLeft, setHintsLeft] = useState<number>(3);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [showDifficultyModal, setShowDifficultyModal] = useState<boolean>(false);
 
-  // Timer effect
+  // Persistence auto-save ref
+  const isInitialMount = useRef(true);
+
+  // Load saved state or generate initial game
   useEffect(() => {
-    if (isPaused || isGameOver || isVictory) return;
+    async function initializeGame() {
+      try {
+        const saved = await loadGameState();
+        if (saved && !saved.isVictory && !saved.isGameOver) {
+          setBoard(saved.board);
+          setSolutionBoard(saved.solutionBoard);
+          setDifficulty(saved.difficulty);
+          setMistakes(saved.mistakes);
+          setTimerSeconds(saved.timerSeconds);
+          setHintsLeft(saved.hintsLeft);
+          setIsNotesMode(saved.isNotesMode);
+          setHistory(saved.history || []);
+          setIsGameOver(saved.isGameOver);
+          setIsVictory(saved.isVictory);
+        } else {
+          startNewGame('Easy', false);
+        }
+      } catch {
+        startNewGame('Easy', false);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    initializeGame();
+  }, []);
+
+  // Timer interval
+  useEffect(() => {
+    if (isLoading || isPaused || isGameOver || isVictory) return;
     const interval = setInterval(() => {
       setTimerSeconds((prev) => prev + 1);
     }, 1000);
     return () => clearInterval(interval);
-  }, [isPaused, isGameOver, isVictory]);
+  }, [isLoading, isPaused, isGameOver, isVictory]);
+
+  // Auto-save state changes
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    if (isLoading || board.length !== 9 || solutionBoard.length !== 9) return;
+
+    const stateToSave: StoredGameState = {
+      board,
+      solutionBoard,
+      difficulty,
+      mistakes,
+      timerSeconds,
+      hintsLeft,
+      isNotesMode,
+      history,
+      isGameOver,
+      isVictory,
+    };
+    saveGameState(stateToSave);
+  }, [
+    board,
+    solutionBoard,
+    difficulty,
+    mistakes,
+    timerSeconds,
+    hintsLeft,
+    isNotesMode,
+    history,
+    isGameOver,
+    isVictory,
+    isLoading,
+  ]);
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -151,20 +130,24 @@ export default function App() {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  // Start a new game
-  const handleNewGame = useCallback(() => {
-    const { initial, solution } = createPermutedPuzzle();
-    setSolutionBoard(solution);
-    setBoard(
-      initial.map((row) =>
-        row.map((val) => ({
-          value: val,
-          isInitial: val !== 0,
-          notes: [],
-          isError: false,
-        }))
-      )
+  // Start a fresh uniquely solvable game with backtracking generator
+  const startNewGame = useCallback((newDiff: Difficulty, triggerHaptics = true) => {
+    if (triggerHaptics) {
+      haptic.medium();
+    }
+    const puzzle = generateSudoku(newDiff);
+    const initialBoard: Cell[][] = puzzle.initial.map((row) =>
+      row.map((val) => ({
+        value: val,
+        isInitial: val !== 0,
+        notes: [],
+        isError: false,
+      }))
     );
+
+    setDifficulty(newDiff);
+    setSolutionBoard(puzzle.solution);
+    setBoard(initialBoard);
     setSelectedCell(null);
     setMistakes(0);
     setTimerSeconds(0);
@@ -173,12 +156,14 @@ export default function App() {
     setIsVictory(false);
     setHistory([]);
     setHintsLeft(3);
+    setShowDifficultyModal(false);
   }, []);
 
   // Restart current puzzle
   const handleRestart = useCallback(() => {
-    setBoard((prevBoard) =>
-      prevBoard.map((row) =>
+    haptic.medium();
+    setBoard((prev) =>
+      prev.map((row) =>
         row.map((cell) => ({
           value: cell.isInitial ? cell.value : 0,
           isInitial: cell.isInitial,
@@ -195,6 +180,7 @@ export default function App() {
     setIsVictory(false);
     setHistory([]);
     setHintsLeft(3);
+    setShowDifficultyModal(false);
   }, []);
 
   // Check victory condition
@@ -212,6 +198,12 @@ export default function App() {
     return true;
   };
 
+  // Cell selection
+  const handleCellSelect = (r: number, c: number) => {
+    haptic.selection();
+    setSelectedCell([r, c]);
+  };
+
   // Number selection handler (from numpad)
   const handleNumberPress = (num: number) => {
     if (!selectedCell || isPaused || isGameOver || isVictory) return;
@@ -222,7 +214,7 @@ export default function App() {
     if (targetCell.isInitial) return;
 
     if (isNotesMode) {
-      // Toggle note candidate
+      haptic.selection();
       const currentNotes = [...targetCell.notes];
       const noteIndex = currentNotes.indexOf(num);
       let updatedNotes: number[];
@@ -255,6 +247,12 @@ export default function App() {
     const isCorrect = solutionBoard[row][col] === num;
     const nextErrorState = !isCorrect;
 
+    if (isCorrect) {
+      haptic.light();
+    } else {
+      haptic.error();
+    }
+
     setHistory((prev) => [
       ...prev,
       {
@@ -286,10 +284,12 @@ export default function App() {
       const nextMistakes = mistakes + 1;
       setMistakes(nextMistakes);
       if (nextMistakes >= 3) {
+        haptic.warning();
         setIsGameOver(true);
       }
     } else {
       if (checkVictory(newBoard)) {
+        haptic.success();
         setIsVictory(true);
       }
     }
@@ -303,6 +303,8 @@ export default function App() {
 
     if (targetCell.isInitial) return;
     if (targetCell.value === 0 && targetCell.notes.length === 0) return;
+
+    haptic.light();
 
     setHistory((prev) => [
       ...prev,
@@ -336,6 +338,7 @@ export default function App() {
   // Undo functionality
   const handleUndo = () => {
     if (history.length === 0 || isPaused || isGameOver || isVictory) return;
+    haptic.light();
     const lastMove = history[history.length - 1];
     setHistory((prev) => prev.slice(0, prev.length - 1));
 
@@ -361,11 +364,12 @@ export default function App() {
   // Hint functionality
   const handleHint = () => {
     if (hintsLeft <= 0 || isPaused || isGameOver || isVictory) return;
+    haptic.medium();
 
     let targetRow = -1;
     let targetCol = -1;
 
-    // If current selected cell is empty or incorrect and not initial, fill it
+    // Prioritize currently selected non-initial incomplete cell
     if (
       selectedCell &&
       !board[selectedCell[0]][selectedCell[1]].isInitial &&
@@ -411,18 +415,21 @@ export default function App() {
     setHintsLeft((prev) => prev - 1);
 
     if (checkVictory(newBoard)) {
+      haptic.success();
       setIsVictory(true);
     }
   };
 
-  // Calculate remaining counts for numpad buttons (1-9)
+  // Remaining counts for numpad buttons (1-9)
   const remainingCounts: Record<number, number> = {};
   for (let d = 1; d <= 9; d++) {
     let placed = 0;
-    for (let r = 0; r < 9; r++) {
-      for (let c = 0; c < 9; c++) {
-        if (board[r][c].value === d && !board[r][c].isError) {
-          placed++;
+    if (board.length === 9) {
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          if (board[r][c].value === d && !board[r][c].isError) {
+            placed++;
+          }
         }
       }
     }
@@ -431,7 +438,20 @@ export default function App() {
 
   // Selected cell helper values
   const selectedValue =
-    selectedCell ? board[selectedCell[0]][selectedCell[1]].value : 0;
+    selectedCell && board.length === 9
+      ? board[selectedCell[0]][selectedCell[1]].value
+      : 0;
+
+  if (isLoading || board.length === 0) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#38BDF8" />
+          <Text style={styles.loadingText}>Generating Sudoku Puzzle...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -442,14 +462,25 @@ export default function App() {
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Text style={styles.title}>SUDOKU</Text>
-            <View style={styles.difficultyBadge}>
-              <Text style={styles.difficultyText}>Easy</Text>
-            </View>
+            <TouchableOpacity
+              style={styles.difficultyBadge}
+              onPress={() => {
+                haptic.selection();
+                setShowDifficultyModal(true);
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.difficultyText}>{difficulty}</Text>
+              <Text style={styles.difficultyCaret}>▼</Text>
+            </TouchableOpacity>
           </View>
 
           <TouchableOpacity
             style={styles.newGameBtn}
-            onPress={handleNewGame}
+            onPress={() => {
+              haptic.selection();
+              setShowDifficultyModal(true);
+            }}
             activeOpacity={0.7}
           >
             <Text style={styles.newGameBtnText}>New Game</Text>
@@ -477,7 +508,10 @@ export default function App() {
             <View style={styles.timerPill}>
               <Text style={styles.timerText}>{formatTime(timerSeconds)}</Text>
               <TouchableOpacity
-                onPress={() => setIsPaused((prev) => !prev)}
+                onPress={() => {
+                  haptic.selection();
+                  setIsPaused((prev) => !prev);
+                }}
                 style={styles.pauseBtn}
                 activeOpacity={0.6}
               >
@@ -514,7 +548,7 @@ export default function App() {
                     cell.value === selectedValue &&
                     !isSelected;
 
-                  // Dynamic borders for 3x3 blocks
+                  // Distinct 3x3 block borders
                   const borderRightThick = cIdx % 3 === 2 && cIdx !== 8;
                   const borderBottomThick = rIdx % 3 === 2 && rIdx !== 8;
 
@@ -536,7 +570,7 @@ export default function App() {
                         isSelected && styles.cellSelected,
                         cell.isError && styles.cellError,
                       ]}
-                      onPress={() => setSelectedCell([rIdx, cIdx])}
+                      onPress={() => handleCellSelect(rIdx, cIdx)}
                       activeOpacity={0.8}
                     >
                       {cell.value !== 0 ? (
@@ -586,7 +620,10 @@ export default function App() {
               <Text style={styles.pauseOverlayTitle}>Game Paused</Text>
               <TouchableOpacity
                 style={styles.resumeBtn}
-                onPress={() => setIsPaused(false)}
+                onPress={() => {
+                  haptic.selection();
+                  setIsPaused(false);
+                }}
                 activeOpacity={0.8}
               >
                 <Text style={styles.resumeBtnText}>▶  Resume</Text>
@@ -621,7 +658,10 @@ export default function App() {
               styles.actionBtn,
               isNotesMode && styles.actionBtnNotesActive,
             ]}
-            onPress={() => setIsNotesMode((prev) => !prev)}
+            onPress={() => {
+              haptic.selection();
+              setIsNotesMode((prev) => !prev);
+            }}
             activeOpacity={0.7}
           >
             <View style={styles.notesIconContainer}>
@@ -707,6 +747,77 @@ export default function App() {
           })}
         </View>
 
+        {/* Difficulty Selection / New Game Modal */}
+        <Modal
+          visible={showDifficultyModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowDifficultyModal(false)}
+        >
+          <View style={styles.modalBackdrop}>
+            <View style={styles.modalCard}>
+              <Text style={styles.difficultyModalTitle}>Select Difficulty</Text>
+              <Text style={styles.difficultyModalSubtitle}>
+                Choose a mode to generate a brand-new uniquely solvable Sudoku puzzle:
+              </Text>
+
+              <View style={styles.diffOptionsList}>
+                {(['Easy', 'Medium', 'Hard'] as Difficulty[]).map((d) => {
+                  const cluesText =
+                    d === 'Easy' ? '~38 Clues' : d === 'Medium' ? '~30 Clues' : '~24 Clues';
+                  const descText =
+                    d === 'Easy'
+                      ? 'Gentle logic for beginners'
+                      : d === 'Medium'
+                      ? 'Standard deductive challenge'
+                      : 'Expert advanced solving';
+
+                  const isCurrent = difficulty === d;
+
+                  return (
+                    <TouchableOpacity
+                      key={`diff-${d}`}
+                      style={[
+                        styles.diffOptionItem,
+                        isCurrent && styles.diffOptionItemCurrent,
+                      ]}
+                      onPress={() => startNewGame(d)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.diffOptionInfo}>
+                        <View style={styles.diffOptionHeader}>
+                          <Text style={styles.diffOptionName}>{d}</Text>
+                          <Text style={styles.diffOptionClues}>{cluesText}</Text>
+                        </View>
+                        <Text style={styles.diffOptionDesc}>{descText}</Text>
+                      </View>
+                      <Text style={styles.diffOptionArrow}>➔</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <View style={styles.modalBtnRow}>
+                <TouchableOpacity
+                  style={styles.modalSecondaryBtn}
+                  onPress={handleRestart}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.modalSecondaryBtnText}>Restart Current</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.modalSecondaryBtn, { borderColor: '#4B5563' }]}
+                  onPress={() => setShowDifficultyModal(false)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.modalSecondaryBtnText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
         {/* Victory Modal */}
         <Modal
           visible={isVictory}
@@ -719,7 +830,8 @@ export default function App() {
               <Text style={styles.modalEmoji}>🎉</Text>
               <Text style={styles.modalTitle}>Puzzle Solved!</Text>
               <Text style={styles.modalSubtitle}>
-                Outstanding performance! You completed the puzzle in{' '}
+                Outstanding performance! You completed the{' '}
+                <Text style={styles.modalHighlight}>{difficulty}</Text> puzzle in{' '}
                 <Text style={styles.modalHighlight}>
                   {formatTime(timerSeconds)}
                 </Text>{' '}
@@ -730,7 +842,7 @@ export default function App() {
 
               <TouchableOpacity
                 style={styles.modalPrimaryBtn}
-                onPress={handleNewGame}
+                onPress={() => setShowDifficultyModal(true)}
                 activeOpacity={0.8}
               >
                 <Text style={styles.modalPrimaryBtnText}>Play New Game</Text>
@@ -766,7 +878,7 @@ export default function App() {
 
                 <TouchableOpacity
                   style={styles.modalPrimaryBtn}
-                  onPress={handleNewGame}
+                  onPress={() => setShowDifficultyModal(true)}
                   activeOpacity={0.8}
                 >
                   <Text style={styles.modalPrimaryBtnText}>New Game</Text>
@@ -793,6 +905,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 10,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  loadingText: {
+    color: '#94A3B8',
+    fontSize: 15,
+    fontWeight: '600',
   },
 
   // Header Styles
@@ -821,12 +944,19 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#38BDF8',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   difficultyText: {
     color: '#38BDF8',
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.5,
+  },
+  difficultyCaret: {
+    color: '#38BDF8',
+    fontSize: 8,
   },
   newGameBtn: {
     backgroundColor: '#1E293B',
@@ -1152,18 +1282,83 @@ const styles = StyleSheet.create({
   },
   modalCard: {
     width: '100%',
-    maxWidth: 340,
+    maxWidth: 360,
     backgroundColor: '#111827',
     borderRadius: 20,
     borderWidth: 1,
     borderColor: '#1F2937',
-    padding: 24,
+    padding: 22,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
     elevation: 8,
+  },
+  difficultyModalTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#F8FAFC',
+    marginBottom: 6,
+  },
+  difficultyModalSubtitle: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+  diffOptionsList: {
+    width: '100%',
+    gap: 10,
+    marginBottom: 16,
+  },
+  diffOptionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#1E293B',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  diffOptionItemCurrent: {
+    borderColor: '#38BDF8',
+    backgroundColor: '#1E3A5F',
+  },
+  diffOptionInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  diffOptionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  diffOptionName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#F8FAFC',
+  },
+  diffOptionClues: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#38BDF8',
+    backgroundColor: '#0F172A',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  diffOptionDesc: {
+    fontSize: 12,
+    color: '#94A3B8',
+  },
+  diffOptionArrow: {
+    fontSize: 16,
+    color: '#38BDF8',
+    marginLeft: 8,
   },
   modalEmoji: {
     fontSize: 52,
@@ -1216,7 +1411,7 @@ const styles = StyleSheet.create({
   },
   modalSecondaryBtnText: {
     color: '#E2E8F0',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
   },
 });
