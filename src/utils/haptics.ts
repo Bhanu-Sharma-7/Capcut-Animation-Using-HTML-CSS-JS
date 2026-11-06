@@ -1,62 +1,62 @@
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
 
+let isHapticsGlobalEnabled = true;
+
+export function setHapticsEnabled(enabled: boolean) {
+  isHapticsGlobalEnabled = enabled;
+}
+
 export const haptic = {
-  selection: () => {
+  selection: (enabled = isHapticsGlobalEnabled) => {
+    if (!enabled || Platform.OS === 'web') return;
     try {
-      if (Platform.OS !== 'web') {
-        Haptics.selectionAsync();
-      }
-    } catch {
-      // Ignore if device lacks haptic motor
-    }
-  },
-
-  light: () => {
-    try {
-      if (Platform.OS !== 'web') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }
+      Haptics.selectionAsync();
     } catch {
       // Ignore
     }
   },
 
-  medium: () => {
+  light: (enabled = isHapticsGlobalEnabled) => {
+    if (!enabled || Platform.OS === 'web') return;
     try {
-      if (Platform.OS !== 'web') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      }
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch {
       // Ignore
     }
   },
 
-  warning: () => {
+  medium: (enabled = isHapticsGlobalEnabled) => {
+    if (!enabled || Platform.OS === 'web') return;
     try {
-      if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      }
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch {
       // Ignore
     }
   },
 
-  error: () => {
+  warning: (enabled = isHapticsGlobalEnabled) => {
+    if (!enabled || Platform.OS === 'web') return;
     try {
-      if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     } catch {
       // Ignore
     }
   },
 
-  success: () => {
+  error: (enabled = isHapticsGlobalEnabled) => {
+    if (!enabled || Platform.OS === 'web') return;
     try {
-      if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } catch {
+      // Ignore
+    }
+  },
+
+  success: (enabled = isHapticsGlobalEnabled) => {
+    if (!enabled || Platform.OS === 'web') return;
+    try {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch {
       // Ignore
     }

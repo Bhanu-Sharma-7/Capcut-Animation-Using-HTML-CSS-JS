@@ -180,3 +180,4 @@ export function generateSudoku(difficulty: Difficulty): GeneratedSudoku {
     difficulty,
   };
 }
+

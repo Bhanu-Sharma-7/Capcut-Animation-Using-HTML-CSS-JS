@@ -1,33 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Difficulty } from './sudokuGenerator';
+import { Cell, MoveHistory, StoredGameState, Difficulty } from '../types/game';
 
-export interface Cell {
-  value: number;
-  isInitial: boolean;
-  notes: number[];
-  isError: boolean;
-}
-
-export interface MoveHistory {
-  row: number;
-  col: number;
-  prevValue: number;
-  prevNotes: number[];
-  prevIsError: boolean;
-}
-
-export interface StoredGameState {
-  board: Cell[][];
-  solutionBoard: number[][];
-  difficulty: Difficulty;
-  mistakes: number;
-  timerSeconds: number;
-  hintsLeft: number;
-  isNotesMode: boolean;
-  history: MoveHistory[];
-  isGameOver: boolean;
-  isVictory: boolean;
-}
+export type { Cell, MoveHistory, StoredGameState, Difficulty };
 
 const STORAGE_KEY = '@sudoku_ongoing_game_v1';
 
@@ -45,7 +19,6 @@ export async function loadGameState(): Promise<StoredGameState | null> {
     const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
     if (jsonValue != null) {
       const parsed: StoredGameState = JSON.parse(jsonValue);
-      // Validate basic structure
       if (
         Array.isArray(parsed.board) &&
         parsed.board.length === 9 &&
