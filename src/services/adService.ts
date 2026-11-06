@@ -60,3 +60,4 @@ export function getHintRewardedAdConfig() {
     message: 'Watch a short simulated rewarded video to unlock a free hint.',
   };
 }
+

@@ -84,3 +84,4 @@ export async function resetUserData(): Promise<UserProfile> {
   await saveUserProfile(DEFAULT_PROFILE);
   return DEFAULT_PROFILE;
 }
+

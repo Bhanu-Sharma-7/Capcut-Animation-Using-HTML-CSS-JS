@@ -51,3 +51,4 @@ export interface AdRequest {
   onComplete: () => void;
   onCancel?: () => void;
 }
+
