@@ -9,38 +9,33 @@ import {
   StatusBar,
   Platform,
 } from 'react-native';
-import { UserProfile, StoredGameState } from '../types/game';
+import { Ionicons } from '@expo/vector-icons';
+import { UserProfile, StoredGameState, Difficulty } from '../types/game';
+import { AppTheme } from '../theme/theme';
 import { haptic } from '../utils/haptics';
 
 interface HomeScreenProps {
   profile: UserProfile;
   ongoingGame: StoredGameState | null;
-  onPlayGame: () => void;
+  theme: AppTheme;
+  onSelectDifficulty: (difficulty: Difficulty) => void;
   onResumeGame: () => void;
-  onOpenProfileEdit: () => void;
-  onOpenSettings: () => void;
+  onNavigateTab: (tab: 'HOME' | 'PROFILE' | 'SETTINGS') => void;
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
   profile,
   ongoingGame,
-  onPlayGame,
+  theme,
+  onSelectDifficulty,
   onResumeGame,
-  onOpenProfileEdit,
-  onOpenSettings,
+  onNavigateTab,
 }) => {
   const formatTime = (secs: number | null) => {
     if (secs === null) return '--:--';
     const m = Math.floor(secs / 60);
     const s = secs % 60;
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  };
-
-  const getRank = (gamesWon: number) => {
-    if (gamesWon >= 25) return '👑 Grandmaster';
-    if (gamesWon >= 10) return '⚡ Sudoku Master';
-    if (gamesWon >= 3) return '🎯 Adept Puzzler';
-    return '🌱 Novice Solver';
   };
 
   const hasOngoing =
@@ -50,159 +45,436 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     ongoingGame.board.length === 9;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView
+      style={[
+        styles.safeArea,
+        { backgroundColor: theme.colors.background },
+      ]}
+    >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Top Profile Header */}
-        <View style={styles.profileHeader}>
-          <TouchableOpacity
-            style={styles.profileUserArea}
-            onPress={() => {
-              haptic.selection();
-              onOpenProfileEdit();
-            }}
-            activeOpacity={0.8}
-          >
-            <View style={styles.avatarCircle}>
-              <Text style={styles.avatarEmoji}>{profile.avatar}</Text>
+        {/* Top Header */}
+        <View style={styles.topHeader}>
+          <View style={styles.brandRow}>
+            <View
+              style={[
+                styles.brandIconBox,
+                { backgroundColor: theme.colors.primarySubtle },
+              ]}
+            >
+              <Ionicons
+                name="grid"
+                size={20}
+                color={theme.colors.primaryLight}
+              />
             </View>
-            <View style={styles.userTextInfo}>
-              <View style={styles.usernameRow}>
-                <Text style={styles.username}>{profile.username}</Text>
-                <Text style={styles.editPencil}>✎</Text>
-              </View>
-              <Text style={styles.userRank}>{getRank(profile.gamesWon)}</Text>
+            <View>
+              <Text style={[styles.brandTitle, { color: theme.colors.text }]}>
+                SUDOKU
+              </Text>
+              <Text
+                style={[styles.brandSubtitle, { color: theme.colors.textMuted }]}
+              >
+                CLASSIC PUZZLE
+              </Text>
             </View>
-          </TouchableOpacity>
+          </View>
 
+          {/* Quick Profile Pill */}
           <TouchableOpacity
-            style={styles.settingsIconBtn}
-            onPress={() => {
-              haptic.selection();
-              onOpenSettings();
-            }}
+            style={[
+              styles.profilePill,
+              {
+                backgroundColor: theme.colors.card,
+                borderColor: theme.colors.cardBorder,
+              },
+            ]}
+            onPress={() => onNavigateTab('PROFILE')}
             activeOpacity={0.7}
           >
-            <Text style={styles.settingsEmoji}>⚙️</Text>
+            <View
+              style={[
+                styles.avatarCircle,
+                { backgroundColor: theme.colors.primarySubtle },
+              ]}
+            >
+              <Ionicons
+                name={profile.avatarIcon as keyof typeof Ionicons.glyphMap}
+                size={16}
+                color={theme.colors.primaryLight}
+              />
+            </View>
+            <Text
+              style={[styles.profilePillName, { color: theme.colors.text }]}
+              numberOfLines={1}
+            >
+              {profile.username}
+            </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Hero Branding Banner */}
-        <View style={styles.heroCard}>
-          <View style={styles.heroLeft}>
-            <Text style={styles.heroBadge}>ORIGINAL LOGIC</Text>
-            <Text style={styles.heroTitle}>SUDOKU MASTER</Text>
-            <Text style={styles.heroSubtitle}>
-              Clean, offline & responsive brain puzzles
+        {/* Hero Card */}
+        <View
+          style={[
+            styles.heroCard,
+            {
+              backgroundColor: theme.colors.card,
+              borderColor: theme.colors.cardBorder,
+            },
+          ]}
+        >
+          <View style={styles.heroContent}>
+            <View style={styles.heroTagRow}>
+              <View
+                style={[
+                  styles.heroBadge,
+                  { backgroundColor: theme.colors.primarySubtle },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.heroBadgeText,
+                    { color: theme.colors.primaryLight },
+                  ]}
+                >
+                  OFFLINE MIND CHALLENGE
+                </Text>
+              </View>
+            </View>
+
+            <Text style={[styles.heroHeading, { color: theme.colors.text }]}>
+              Master Every Grid
             </Text>
-          </View>
-          <View style={styles.heroGridDecoration}>
-            <Text style={styles.heroDecoText}>9 4 1</Text>
-            <Text style={styles.heroDecoText}>2 8 7</Text>
-            <Text style={styles.heroDecoText}>6 3 5</Text>
+            <Text
+              style={[styles.heroDescription, { color: theme.colors.textSecondary }]}
+            >
+              Sharpen your deductive logic with pure unique backtracking puzzles.
+            </Text>
+
+            <TouchableOpacity
+              style={[
+                styles.heroPlayButton,
+                { backgroundColor: theme.colors.primary },
+              ]}
+              onPress={() => onSelectDifficulty('Medium')}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="play" size={18} color="#FFFFFF" />
+              <Text style={styles.heroPlayText}>QUICK PLAY</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* Ongoing Game Resume Card */}
+        {/* Resume Ongoing Game Banner */}
         {hasOngoing && (
           <TouchableOpacity
-            style={styles.resumeCard}
+            style={[
+              styles.resumeCard,
+              {
+                backgroundColor: theme.colors.card,
+                borderColor: theme.colors.primaryLight,
+              },
+            ]}
             onPress={() => {
               haptic.medium();
               onResumeGame();
             }}
             activeOpacity={0.85}
           >
-            <View style={styles.resumeLeft}>
-              <View style={styles.resumeTag}>
-                <Text style={styles.resumeTagText}>MATCH IN PROGRESS</Text>
+            <View style={styles.resumeInfo}>
+              <View style={styles.resumeStatusRow}>
+                <View
+                  style={[
+                    styles.pulseLiveDot,
+                    { backgroundColor: theme.colors.success },
+                  ]}
+                />
+                <Text
+                  style={[
+                    styles.resumeStatusText,
+                    { color: theme.colors.success },
+                  ]}
+                >
+                  MATCH IN PROGRESS
+                </Text>
               </View>
-              <Text style={styles.resumeTitle}>
-                Continue {ongoingGame.difficulty} Puzzle
+
+              <Text
+                style={[styles.resumeDifficulty, { color: theme.colors.text }]}
+              >
+                {ongoingGame.difficulty} Match
               </Text>
-              <Text style={styles.resumeMeta}>
+              <Text
+                style={[styles.resumeMeta, { color: theme.colors.textSecondary }]}
+              >
                 Time: {formatTime(ongoingGame.timerSeconds)} • Mistakes:{' '}
                 {ongoingGame.mistakes}/3
               </Text>
             </View>
-            <View style={styles.resumeArrowBtn}>
-              <Text style={styles.resumeArrowText}>▶</Text>
+
+            <View
+              style={[
+                styles.resumeArrowBox,
+                { backgroundColor: theme.colors.primary },
+              ]}
+            >
+              <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
             </View>
           </TouchableOpacity>
         )}
 
-        {/* Primary Action Button */}
-        <TouchableOpacity
-          style={styles.playGameBtn}
-          onPress={() => {
-            haptic.medium();
-            onPlayGame();
-          }}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.playGameIcon}>▶</Text>
-          <Text style={styles.playGameText}>PLAY NEW GAME</Text>
-        </TouchableOpacity>
-
-        {/* Player Stats Section */}
-        <View style={styles.statsSection}>
-          <Text style={styles.sectionHeader}>Career Statistics</Text>
-
-          {/* Games Won Card */}
-          <View style={styles.mainStatCard}>
-            <View style={styles.mainStatLeft}>
-              <Text style={styles.statIcon}>🏆</Text>
-              <View>
-                <Text style={styles.mainStatLabel}>Total Games Won</Text>
-                <Text style={styles.mainStatValue}>{profile.gamesWon}</Text>
-              </View>
-            </View>
-            <View style={styles.winBadge}>
-              <Text style={styles.winBadgeText}>100% Verified</Text>
-            </View>
-          </View>
-
-          {/* Best Times Grid */}
-          <View style={styles.bestTimesRow}>
-            <View style={styles.timeCard}>
-              <Text style={styles.timeCardDifficulty}>Easy</Text>
-              <Text style={styles.timeCardValue}>
-                {formatTime(profile.bestTimeEasy)}
-              </Text>
-              <Text style={styles.timeCardLabel}>Best Record</Text>
-            </View>
-
-            <View style={styles.timeCard}>
-              <Text style={styles.timeCardDifficulty}>Medium</Text>
-              <Text style={styles.timeCardValue}>
-                {formatTime(profile.bestTimeMedium)}
-              </Text>
-              <Text style={styles.timeCardLabel}>Best Record</Text>
-            </View>
-
-            <View style={styles.timeCard}>
-              <Text style={styles.timeCardDifficulty}>Hard</Text>
-              <Text style={styles.timeCardValue}>
-                {formatTime(profile.bestTimeHard)}
-              </Text>
-              <Text style={styles.timeCardLabel}>Best Record</Text>
-            </View>
-          </View>
+        {/* Difficulty Selection Section */}
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+            Select Challenge
+          </Text>
+          <Text style={[styles.sectionSubtitle, { color: theme.colors.textMuted }]}>
+            Pick a tier to generate a uniquely solvable board
+          </Text>
         </View>
 
-        {/* How to Play / Tips Card */}
-        <View style={styles.tipsCard}>
-          <View style={styles.tipHeader}>
-            <Text style={styles.tipIcon}>💡</Text>
-            <Text style={styles.tipTitle}>Quick Pro Tip</Text>
+        <View style={styles.difficultyGrid}>
+          {/* Easy */}
+          <TouchableOpacity
+            style={[
+              styles.diffCard,
+              {
+                backgroundColor: theme.colors.card,
+                borderColor: theme.colors.cardBorder,
+              },
+            ]}
+            onPress={() => onSelectDifficulty('Easy')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.diffCardTop}>
+              <View
+                style={[
+                  styles.diffIconWrapper,
+                  { backgroundColor: theme.colors.successSubtle },
+                ]}
+              >
+                <Ionicons
+                  name="leaf"
+                  size={20}
+                  color={theme.colors.success}
+                />
+              </View>
+              <View
+                style={[
+                  styles.tagPill,
+                  { backgroundColor: theme.colors.successSubtle },
+                ]}
+              >
+                <Text
+                  style={[styles.tagPillText, { color: theme.colors.success }]}
+                >
+                  FREE
+                </Text>
+              </View>
+            </View>
+
+            <Text style={[styles.diffCardName, { color: theme.colors.text }]}>
+              Easy
+            </Text>
+            <Text
+              style={[styles.diffCardClues, { color: theme.colors.textSecondary }]}
+            >
+              ~38 Clues • Gentle logic
+            </Text>
+
+            <View style={styles.diffCardFooter}>
+              <Text
+                style={[styles.bestLabel, { color: theme.colors.textMuted }]}
+              >
+                Best: {formatTime(profile.bestTimeEasy)}
+              </Text>
+              <Ionicons
+                name="chevron-forward"
+                size={16}
+                color={theme.colors.textMuted}
+              />
+            </View>
+          </TouchableOpacity>
+
+          {/* Medium */}
+          <TouchableOpacity
+            style={[
+              styles.diffCard,
+              {
+                backgroundColor: theme.colors.card,
+                borderColor: theme.colors.cardBorder,
+              },
+            ]}
+            onPress={() => onSelectDifficulty('Medium')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.diffCardTop}>
+              <View
+                style={[
+                  styles.diffIconWrapper,
+                  { backgroundColor: theme.colors.primarySubtle },
+                ]}
+              >
+                <Ionicons
+                  name="flame"
+                  size={20}
+                  color={theme.colors.primaryLight}
+                />
+              </View>
+              <View
+                style={[
+                  styles.tagPill,
+                  { backgroundColor: theme.colors.primarySubtle },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.tagPillText,
+                    { color: theme.colors.primaryLight },
+                  ]}
+                >
+                  POPULAR
+                </Text>
+              </View>
+            </View>
+
+            <Text style={[styles.diffCardName, { color: theme.colors.text }]}>
+              Medium
+            </Text>
+            <Text
+              style={[styles.diffCardClues, { color: theme.colors.textSecondary }]}
+            >
+              ~30 Clues • Balanced
+            </Text>
+
+            <View style={styles.diffCardFooter}>
+              <Text
+                style={[styles.bestLabel, { color: theme.colors.textMuted }]}
+              >
+                Best: {formatTime(profile.bestTimeMedium)}
+              </Text>
+              <Ionicons
+                name="chevron-forward"
+                size={16}
+                color={theme.colors.textMuted}
+              />
+            </View>
+          </TouchableOpacity>
+
+          {/* Hard */}
+          <TouchableOpacity
+            style={[
+              styles.diffCard,
+              {
+                backgroundColor: theme.colors.card,
+                borderColor: theme.colors.cardBorder,
+              },
+            ]}
+            onPress={() => onSelectDifficulty('Hard')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.diffCardTop}>
+              <View
+                style={[
+                  styles.diffIconWrapper,
+                  { backgroundColor: theme.colors.warningSubtle },
+                ]}
+              >
+                <Ionicons
+                  name="skull"
+                  size={20}
+                  color={theme.colors.warning}
+                />
+              </View>
+              <View
+                style={[
+                  styles.tagPill,
+                  { backgroundColor: theme.colors.warningSubtle },
+                ]}
+              >
+                <Text
+                  style={[styles.tagPillText, { color: theme.colors.warning }]}
+                >
+                  EXPERT
+                </Text>
+              </View>
+            </View>
+
+            <Text style={[styles.diffCardName, { color: theme.colors.text }]}>
+              Hard
+            </Text>
+            <Text
+              style={[styles.diffCardClues, { color: theme.colors.textSecondary }]}
+            >
+              ~24 Clues • Advanced
+            </Text>
+
+            <View style={styles.diffCardFooter}>
+              <Text
+                style={[styles.bestLabel, { color: theme.colors.textMuted }]}
+              >
+                Best: {formatTime(profile.bestTimeHard)}
+              </Text>
+              <Ionicons
+                name="chevron-forward"
+                size={16}
+                color={theme.colors.textMuted}
+              />
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* Quick Stats Summary */}
+        <View
+          style={[
+            styles.statsCard,
+            {
+              backgroundColor: theme.colors.card,
+              borderColor: theme.colors.cardBorder,
+            },
+          ]}
+        >
+          <View style={styles.statCol}>
+            <View style={styles.statIconRow}>
+              <Ionicons
+                name="trophy-outline"
+                size={16}
+                color={theme.colors.warning}
+              />
+              <Text
+                style={[styles.statLabelText, { color: theme.colors.textMuted }]}
+              >
+                Games Won
+              </Text>
+            </View>
+            <Text style={[styles.statValueText, { color: theme.colors.text }]}>
+              {profile.gamesWon}
+            </Text>
           </View>
-          <Text style={styles.tipBody}>
-            Use the <Text style={styles.tipHighlight}>Notes (✎)</Text> mode to
-            jot down candidate digits in empty cells before making firm
-            placements!
-          </Text>
+
+          <View
+            style={[styles.statDivider, { backgroundColor: theme.colors.divider }]}
+          />
+
+          <View style={styles.statCol}>
+            <View style={styles.statIconRow}>
+              <Ionicons
+                name="flash-outline"
+                size={16}
+                color={theme.colors.primaryLight}
+              />
+              <Text
+                style={[styles.statLabelText, { color: theme.colors.textMuted }]}
+              >
+                Win Streak
+              </Text>
+            </View>
+            <Text style={[styles.statValueText, { color: theme.colors.text }]}>
+              {profile.winStreak}
+            </Text>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -212,324 +484,256 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#090D16',
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    gap: 18,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    gap: 16,
   },
-
-  // Profile Header
-  profileHeader: {
+  topHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#0F172A',
-    borderRadius: 16,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#1E293B',
+    paddingVertical: 4,
   },
-  profileUserArea: {
+  brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    flex: 1,
+    gap: 10,
+  },
+  brandIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  brandTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: 2,
+  },
+  brandSubtitle: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  profilePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 4,
+    paddingRight: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1,
+    gap: 6,
+    maxWidth: 140,
   },
   avatarCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#1E293B',
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#38BDF8',
   },
-  avatarEmoji: {
-    fontSize: 24,
-  },
-  userTextInfo: {
-    gap: 2,
-  },
-  usernameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  username: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#F8FAFC',
-  },
-  editPencil: {
+  profilePillName: {
     fontSize: 12,
-    color: '#38BDF8',
-  },
-  userRank: {
-    fontSize: 12,
-    color: '#94A3B8',
-    fontWeight: '600',
-  },
-  settingsIconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#1E293B',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#334155',
-  },
-  settingsEmoji: {
-    fontSize: 18,
+    fontWeight: '700',
   },
 
   // Hero Card
   heroCard: {
-    backgroundColor: '#111827',
     borderRadius: 20,
     padding: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     borderWidth: 1,
-    borderColor: '#1F2937',
     elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
   },
-  heroLeft: {
-    flex: 1,
-    gap: 4,
+  heroContent: {
+    gap: 8,
+  },
+  heroTagRow: {
+    flexDirection: 'row',
   },
   heroBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  heroBadgeText: {
     fontSize: 10,
     fontWeight: '800',
-    letterSpacing: 1.5,
-    color: '#38BDF8',
+    letterSpacing: 1,
   },
-  heroTitle: {
+  heroHeading: {
     fontSize: 22,
     fontWeight: '900',
-    letterSpacing: 2,
-    color: '#F8FAFC',
+    letterSpacing: 0.5,
   },
-  heroSubtitle: {
-    fontSize: 12,
-    color: '#94A3B8',
-    lineHeight: 16,
+  heroDescription: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 6,
   },
-  heroGridDecoration: {
-    backgroundColor: '#1E293B',
+  heroPlayButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
     borderRadius: 12,
-    padding: 8,
-    borderWidth: 1,
-    borderColor: '#334155',
-    gap: 2,
+    marginTop: 4,
   },
-  heroDecoText: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 4,
-    color: '#38BDF8',
-    textAlign: 'center',
+  heroPlayText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '900',
+    letterSpacing: 1.2,
   },
 
   // Resume Card
   resumeCard: {
-    backgroundColor: '#1E293B',
     borderRadius: 16,
     padding: 16,
+    borderWidth: 1.5,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: '#38BDF8',
     elevation: 3,
   },
-  resumeLeft: {
-    flex: 1,
+  resumeInfo: {
     gap: 4,
   },
-  resumeTag: {
-    backgroundColor: '#0F172A',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
+  resumeStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
-  resumeTagText: {
-    color: '#38BDF8',
+  pulseLiveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  resumeStatusText: {
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
-  resumeTitle: {
+  resumeDifficulty: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#F8FAFC',
   },
   resumeMeta: {
     fontSize: 12,
-    color: '#94A3B8',
   },
-  resumeArrowBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#2563EB',
+  resumeArrowBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 10,
-  },
-  resumeArrowText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    marginLeft: 2,
   },
 
-  // Play Game Button
-  playGameBtn: {
-    backgroundColor: '#2563EB',
-    borderRadius: 16,
-    paddingVertical: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    elevation: 6,
-    shadowColor: '#2563EB',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-  },
-  playGameIcon: {
-    color: '#FFFFFF',
-    fontSize: 18,
-  },
-  playGameText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '900',
-    letterSpacing: 1.5,
-  },
-
-  // Stats
-  statsSection: {
-    gap: 10,
-  },
+  // Section Headers
   sectionHeader: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#94A3B8',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
+    marginTop: 4,
+    gap: 2,
   },
-  mainStatCard: {
-    backgroundColor: '#0F172A',
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  sectionSubtitle: {
+    fontSize: 12,
+  },
+
+  // Difficulty Cards
+  difficultyGrid: {
+    gap: 10,
+  },
+  diffCard: {
     borderRadius: 16,
     padding: 16,
+    borderWidth: 1,
+    gap: 6,
+  },
+  diffCardTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  diffIconWrapper: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tagPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  tagPillText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  diffCardName: {
+    fontSize: 17,
+    fontWeight: '800',
+  },
+  diffCardClues: {
+    fontSize: 12,
+  },
+  diffCardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: '#1E293B',
+    marginTop: 4,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(150, 150, 150, 0.1)',
   },
-  mainStatLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  statIcon: {
-    fontSize: 32,
-  },
-  mainStatLabel: {
-    fontSize: 13,
-    color: '#94A3B8',
-    fontWeight: '600',
-  },
-  mainStatValue: {
-    fontSize: 26,
-    fontWeight: '900',
-    color: '#F8FAFC',
-  },
-  winBadge: {
-    backgroundColor: '#064E3B',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#10B981',
-  },
-  winBadgeText: {
-    color: '#34D399',
+  bestLabel: {
     fontSize: 11,
-    fontWeight: '700',
-  },
-  bestTimesRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  timeCard: {
-    flex: 1,
-    backgroundColor: '#0F172A',
-    borderRadius: 14,
-    padding: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#1E293B',
-    gap: 2,
-  },
-  timeCardDifficulty: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#38BDF8',
-  },
-  timeCardValue: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#F8FAFC',
-    marginVertical: 2,
-    fontVariant: ['tabular-nums'],
-  },
-  timeCardLabel: {
-    fontSize: 10,
-    color: '#64748B',
     fontWeight: '600',
   },
 
-  // Tips Card
-  tipsCard: {
-    backgroundColor: '#111827',
+  // Stats Card
+  statsCard: {
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#1F2937',
-    gap: 6,
-    marginBottom: 20,
-  },
-  tipHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    marginBottom: 10,
   },
-  tipIcon: {
-    fontSize: 16,
+  statCol: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 4,
   },
-  tipTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#38BDF8',
+  statIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
-  tipBody: {
-    fontSize: 12,
-    color: '#94A3B8',
-    lineHeight: 18,
+  statLabelText: {
+    fontSize: 11,
+    fontWeight: '600',
   },
-  tipHighlight: {
-    color: '#F8FAFC',
-    fontWeight: '700',
+  statValueText: {
+    fontSize: 22,
+    fontWeight: '900',
+  },
+  statDivider: {
+    width: 1,
+    height: 32,
   },
 });
-

@@ -1,4 +1,8 @@
-export type Screen = 'SPLASH' | 'HOME' | 'GAME';
+import { ThemeMode } from '../theme/theme';
+
+export type Screen = 'SPLASH' | 'MAIN' | 'GAME';
+
+export type Tab = 'HOME' | 'PROFILE' | 'SETTINGS';
 
 export type Difficulty = 'Easy' | 'Medium' | 'Hard';
 
@@ -19,13 +23,15 @@ export interface MoveHistory {
 
 export interface UserProfile {
   username: string;
-  avatar: string;
+  avatarIcon: string; // vector icon name e.g. 'flash', 'shield', 'trophy', 'rocket', 'star', 'flame', 'bulb', 'compass'
   gamesWon: number;
+  winStreak: number;
   bestTimeEasy: number | null;
   bestTimeMedium: number | null;
   bestTimeHard: number | null;
   hapticsEnabled: boolean;
   soundEnabled: boolean;
+  themeMode: ThemeMode;
   mediumMatchesCount: number;
 }
 
@@ -51,4 +57,3 @@ export interface AdRequest {
   onComplete: () => void;
   onCancel?: () => void;
 }
-

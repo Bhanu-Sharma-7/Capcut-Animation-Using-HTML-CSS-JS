@@ -6,14 +6,16 @@ import {
   Modal,
   TouchableOpacity,
   Animated,
-  useWindowDimensions,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { AdType } from '../types/game';
+import { AppTheme } from '../theme/theme';
 import { haptic } from '../utils/haptics';
 
 interface SimulatedAdModalProps {
   visible: boolean;
   type: AdType;
+  theme: AppTheme;
   title?: string;
   durationSeconds?: number;
   onComplete: () => void;
@@ -23,12 +25,12 @@ interface SimulatedAdModalProps {
 export const SimulatedAdModal: React.FC<SimulatedAdModalProps> = ({
   visible,
   type,
+  theme,
   title = 'Sponsor Ad',
   durationSeconds = 4,
   onComplete,
   onCancel,
 }) => {
-  const { width } = useWindowDimensions();
   const [secondsRemaining, setSecondsRemaining] = useState<number>(durationSeconds);
   const [isCompleted, setIsCompleted] = useState<boolean>(false);
   const progressAnim = useRef(new Animated.Value(0)).current;
@@ -45,7 +47,6 @@ export const SimulatedAdModal: React.FC<SimulatedAdModalProps> = ({
     setIsCompleted(false);
     progressAnim.setValue(0);
 
-    // Animate progress bar across duration
     Animated.timing(progressAnim, {
       toValue: 1,
       duration: durationSeconds * 1000,
@@ -93,77 +94,161 @@ export const SimulatedAdModal: React.FC<SimulatedAdModalProps> = ({
       }}
     >
       <View style={styles.backdrop}>
-        <View style={styles.adContainer}>
-          {/* Ad Top Bar */}
+        <View
+          style={[
+            styles.adContainer,
+            {
+              backgroundColor: theme.colors.card,
+              borderColor: theme.colors.cardBorder,
+            },
+          ]}
+        >
+          {/* Top Bar */}
           <View style={styles.topBar}>
-            <View style={styles.adBadge}>
-              <Text style={styles.adBadgeText}>Ad • Simulated</Text>
+            <View
+              style={[
+                styles.adBadge,
+                {
+                  backgroundColor: theme.colors.warningSubtle,
+                  borderColor: theme.colors.warning,
+                },
+              ]}
+            >
+              <Text
+                style={[styles.adBadgeText, { color: theme.colors.warning }]}
+              >
+                AD • SIMULATED
+              </Text>
             </View>
 
             <View style={styles.counterContainer}>
               {!isCompleted ? (
-                <Text style={styles.counterText}>
+                <Text
+                  style={[styles.counterText, { color: theme.colors.textMuted }]}
+                >
                   {isRewarded ? 'Reward in ' : 'Skip in '}
-                  <Text style={styles.counterHighlight}>{secondsRemaining}s</Text>
+                  <Text
+                    style={[
+                      styles.counterHighlight,
+                      { color: theme.colors.primaryLight },
+                    ]}
+                  >
+                    {secondsRemaining}s
+                  </Text>
                 </Text>
               ) : (
                 <TouchableOpacity
-                  style={styles.closeBtn}
+                  style={[
+                    styles.closeBtn,
+                    { backgroundColor: theme.colors.primary },
+                  ]}
                   onPress={handleFinish}
                   activeOpacity={0.8}
                 >
                   <Text style={styles.closeBtnText}>
-                    {isRewarded ? 'Claim Reward ✓' : 'Continue ➔'}
+                    {isRewarded ? 'Claim Reward' : 'Continue'}
                   </Text>
+                  <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
                 </TouchableOpacity>
               )}
             </View>
           </View>
 
-          {/* Ad Creative Card */}
-          <View style={styles.creativeCard}>
-            <View style={styles.appIconContainer}>
-              <Text style={styles.appIconEmoji}>🧠</Text>
+          {/* Creative Card */}
+          <View
+            style={[
+              styles.creativeCard,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.cardBorder,
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.appIconContainer,
+                { backgroundColor: theme.colors.primarySubtle },
+              ]}
+            >
+              <Ionicons
+                name="extension-puzzle"
+                size={34}
+                color={theme.colors.primaryLight}
+              />
             </View>
 
-            <Text style={styles.adAppTitle}>Brain Boost Puzzles 3D</Text>
-            <Text style={styles.adAppCategory}>Puzzle • Mind Training</Text>
+            <Text style={[styles.adAppTitle, { color: theme.colors.text }]}>
+              Logic Mind Puzzles 3D
+            </Text>
+            <Text
+              style={[styles.adAppCategory, { color: theme.colors.textMuted }]}
+            >
+              Brain Training & Offline Logic
+            </Text>
 
             <View style={styles.ratingRow}>
-              <Text style={styles.stars}>★★★★★</Text>
-              <Text style={styles.ratingScore}>4.9 (1.4M)</Text>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Ionicons key={`star-${i}`} name="star" size={14} color="#FBBF24" />
+              ))}
+              <Text
+                style={[styles.ratingScore, { color: theme.colors.textSecondary }]}
+              >
+                4.9 (1.4M Reviews)
+              </Text>
             </View>
 
-            <View style={styles.mockBannerGraphic}>
-              <Text style={styles.mockBannerTitle}>Challenge Your Logic</Text>
-              <Text style={styles.mockBannerSubtitle}>
-                Unlock 5,000+ levels of offline mind games!
+            <View
+              style={[
+                styles.mockBannerGraphic,
+                {
+                  backgroundColor: theme.colors.card,
+                  borderColor: theme.colors.cardBorder,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.mockBannerTitle,
+                  { color: theme.colors.primaryLight },
+                ]}
+              >
+                10,000+ Unique Challenges
               </Text>
-              <View style={styles.demoPillsRow}>
-                <View style={styles.demoPill}>
-                  <Text style={styles.demoPillText}>Brain IQ +24%</Text>
-                </View>
-                <View style={styles.demoPill}>
-                  <Text style={styles.demoPillText}>No WiFi Needed</Text>
-                </View>
-              </View>
+              <Text
+                style={[
+                  styles.mockBannerSubtitle,
+                  { color: theme.colors.textMuted },
+                ]}
+              >
+                Play without internet anytime, anywhere.
+              </Text>
             </View>
 
             <TouchableOpacity
-              style={styles.installBtn}
+              style={[
+                styles.installBtn,
+                { backgroundColor: theme.colors.success },
+              ]}
               activeOpacity={0.8}
               onPress={() => haptic.selection()}
             >
+              <Ionicons name="download-outline" size={18} color="#FFFFFF" />
               <Text style={styles.installBtnText}>INSTALL FREE</Text>
             </TouchableOpacity>
           </View>
 
           {/* Progress bar */}
-          <View style={styles.progressTrack}>
+          <View
+            style={[
+              styles.progressTrack,
+              { backgroundColor: theme.colors.divider },
+            ]}
+          >
             <Animated.View
               style={[
                 styles.progressBar,
                 {
+                  backgroundColor: theme.colors.primaryLight,
                   width: progressAnim.interpolate({
                     inputRange: [0, 1],
                     outputRange: ['0%', '100%'],
@@ -173,12 +258,14 @@ export const SimulatedAdModal: React.FC<SimulatedAdModalProps> = ({
             />
           </View>
 
-          {/* Bottom message */}
+          {/* Bottom notices */}
           <View style={styles.footerRow}>
-            <Text style={styles.footerNotice}>
+            <Text
+              style={[styles.footerNotice, { color: theme.colors.textMuted }]}
+            >
               {isCompleted
                 ? isRewarded
-                  ? '🎉 Reward earned! Tap button above to continue.'
+                  ? 'Reward ready! Tap button above to continue.'
                   : 'Sponsor completed. Ready to play!'
                 : `${title} (${secondsRemaining}s remaining)`}
             </Text>
@@ -189,7 +276,14 @@ export const SimulatedAdModal: React.FC<SimulatedAdModalProps> = ({
                 style={styles.cancelLink}
                 activeOpacity={0.7}
               >
-                <Text style={styles.cancelLinkText}>Cancel Ad</Text>
+                <Text
+                  style={[
+                    styles.cancelLinkText,
+                    { color: theme.colors.textSecondary },
+                  ]}
+                >
+                  Cancel Ad
+                </Text>
               </TouchableOpacity>
             )}
           </View>
@@ -202,7 +296,7 @@ export const SimulatedAdModal: React.FC<SimulatedAdModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
@@ -210,16 +304,14 @@ const styles = StyleSheet.create({
   adContainer: {
     width: '100%',
     maxWidth: 380,
-    backgroundColor: '#0F172A',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#1E293B',
     padding: 20,
     alignItems: 'center',
     elevation: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.6,
+    shadowOpacity: 0.5,
     shadowRadius: 16,
   },
   topBar: {
@@ -230,15 +322,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   adBadge: {
-    backgroundColor: '#F59E0B22',
     borderWidth: 1,
-    borderColor: '#F59E0B',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
   },
   adBadgeText: {
-    color: '#F59E0B',
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -247,16 +336,16 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   counterText: {
-    color: '#94A3B8',
     fontSize: 13,
     fontWeight: '600',
   },
   counterHighlight: {
-    color: '#38BDF8',
     fontWeight: '800',
   },
   closeBtn: {
-    backgroundColor: '#2563EB',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 10,
@@ -268,101 +357,66 @@ const styles = StyleSheet.create({
   },
   creativeCard: {
     width: '100%',
-    backgroundColor: '#1E293B',
     borderRadius: 16,
     padding: 18,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#334155',
     marginBottom: 16,
   },
   appIconContainer: {
     width: 64,
     height: 64,
     borderRadius: 16,
-    backgroundColor: '#111827',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: '#38BDF8',
     marginBottom: 10,
-    elevation: 4,
-  },
-  appIconEmoji: {
-    fontSize: 32,
   },
   adAppTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#F8FAFC',
     marginBottom: 2,
   },
   adAppCategory: {
     fontSize: 12,
-    color: '#94A3B8',
     fontWeight: '500',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
     marginBottom: 14,
   },
-  stars: {
-    color: '#FBBF24',
-    fontSize: 13,
-    letterSpacing: 1,
-  },
   ratingScore: {
-    color: '#CBD5E1',
     fontSize: 12,
     fontWeight: '600',
+    marginLeft: 4,
   },
   mockBannerGraphic: {
     width: '100%',
-    backgroundColor: '#0F172A',
     borderRadius: 12,
     padding: 14,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#1E293B',
     marginBottom: 16,
+    gap: 4,
   },
   mockBannerTitle: {
-    color: '#38BDF8',
     fontSize: 14,
     fontWeight: '700',
-    marginBottom: 4,
   },
   mockBannerSubtitle: {
-    color: '#94A3B8',
     fontSize: 11,
     textAlign: 'center',
-    marginBottom: 10,
-  },
-  demoPillsRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  demoPill: {
-    backgroundColor: '#1E293B',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  demoPillText: {
-    color: '#A5F3FC',
-    fontSize: 10,
-    fontWeight: '600',
   },
   installBtn: {
     width: '100%',
-    backgroundColor: '#10B981',
     paddingVertical: 12,
     borderRadius: 12,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
     elevation: 3,
   },
   installBtnText: {
@@ -374,14 +428,12 @@ const styles = StyleSheet.create({
   progressTrack: {
     width: '100%',
     height: 4,
-    backgroundColor: '#1E293B',
     borderRadius: 2,
     overflow: 'hidden',
     marginBottom: 12,
   },
   progressBar: {
     height: '100%',
-    backgroundColor: '#38BDF8',
   },
   footerRow: {
     width: '100%',
@@ -389,7 +441,6 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   footerNotice: {
-    color: '#64748B',
     fontSize: 11,
     textAlign: 'center',
   },
@@ -397,9 +448,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   cancelLinkText: {
-    color: '#94A3B8',
     fontSize: 12,
     textDecorationLine: 'underline',
   },
 });
-

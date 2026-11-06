@@ -1,17 +1,19 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserProfile, Difficulty } from '../types/game';
 
-const PROFILE_STORAGE_KEY = '@sudoku_user_profile_v1';
+const PROFILE_STORAGE_KEY = '@sudoku_user_profile_v2';
 
 export const DEFAULT_PROFILE: UserProfile = {
   username: 'Puzzle Master',
-  avatar: '🧠',
+  avatarIcon: 'trophy',
   gamesWon: 0,
+  winStreak: 0,
   bestTimeEasy: null,
   bestTimeMedium: null,
   bestTimeHard: null,
   hapticsEnabled: true,
   soundEnabled: true,
+  themeMode: 'dark',
   mediumMatchesCount: 0,
 };
 
@@ -49,6 +51,7 @@ export async function recordGameWon(
   const updated: UserProfile = {
     ...current,
     gamesWon: current.gamesWon + 1,
+    winStreak: current.winStreak + 1,
   };
 
   if (difficulty === 'Easy') {
@@ -72,6 +75,16 @@ export async function recordGameWon(
   return { profile: updated, isNewBest };
 }
 
+export async function recordGameLoss(): Promise<UserProfile> {
+  const current = await loadUserProfile();
+  const updated: UserProfile = {
+    ...current,
+    winStreak: 0,
+  };
+  await saveUserProfile(updated);
+  return updated;
+}
+
 export async function incrementMediumMatchesCount(): Promise<number> {
   const current = await loadUserProfile();
   const nextCount = current.mediumMatchesCount + 1;
@@ -84,4 +97,3 @@ export async function resetUserData(): Promise<UserProfile> {
   await saveUserProfile(DEFAULT_PROFILE);
   return DEFAULT_PROFILE;
 }
-

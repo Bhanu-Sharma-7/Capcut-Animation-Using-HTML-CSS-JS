@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, BackHandler, Alert } from 'react-native';
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
 import {
   Screen,
+  Tab,
   Difficulty,
   Cell,
   MoveHistory,
@@ -10,6 +11,7 @@ import {
   StoredGameState,
   AdRequest,
 } from './src/types/game';
+import { darkTheme, lightTheme, AppTheme } from './src/theme/theme';
 import { generateSudoku } from './src/utils/sudokuGenerator';
 import { setHapticsEnabled } from './src/utils/haptics';
 import {
@@ -31,16 +33,18 @@ import {
 } from './src/services/adService';
 
 import { SplashScreen } from './src/components/SplashScreen';
+import { BottomNavBar } from './src/components/BottomNavBar';
 import { HomeScreen } from './src/components/HomeScreen';
+import { ProfileScreen } from './src/components/ProfileScreen';
+import { SettingsScreen } from './src/components/SettingsScreen';
 import { GameScreen } from './src/components/GameScreen';
-import { SimulatedAdModal } from './src/components/SimulatedAdModal';
-import { ProfileEditModal } from './src/components/ProfileEditModal';
-import { SettingsModal } from './src/components/SettingsModal';
 import { DifficultyModal } from './src/components/DifficultyModal';
+import { SimulatedAdModal } from './src/components/SimulatedAdModal';
 
 export default function App() {
   // Navigation State
   const [currentScreen, setCurrentScreen] = useState<Screen>('SPLASH');
+  const [currentTab, setCurrentTab] = useState<Tab>('HOME');
 
   // User Profile
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
@@ -57,12 +61,14 @@ export default function App() {
   const [activeHistory, setActiveHistory] = useState<MoveHistory[]>([]);
 
   // Modals Visibility
-  const [showProfileModal, setShowProfileModal] = useState<boolean>(false);
-  const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
   const [showDifficultyModal, setShowDifficultyModal] = useState<boolean>(false);
 
   // Simulated Ad State
   const [activeAd, setActiveAd] = useState<AdRequest | null>(null);
+
+  // Resolved dynamic theme
+  const theme: AppTheme =
+    profile.themeMode === 'light' ? lightTheme : darkTheme;
 
   // Load profile and stored ongoing game on initial mount
   useEffect(() => {
@@ -78,6 +84,47 @@ export default function App() {
     }
     init();
   }, []);
+
+  // Hardware Back Button Handler
+  useEffect(() => {
+    const onBackPress = () => {
+      // 1. If currently in Game, return to Home screen
+      if (currentScreen === 'GAME') {
+        setCurrentScreen('MAIN');
+        setCurrentTab('HOME');
+        return true;
+      }
+
+      // 2. If in Main screen but on Profile or Settings tab, return to Home tab
+      if (currentScreen === 'MAIN') {
+        if (currentTab === 'PROFILE' || currentTab === 'SETTINGS') {
+          setCurrentTab('HOME');
+          return true;
+        }
+
+        // 3. If on Home tab, show confirmation dialog before exiting
+        if (currentTab === 'HOME') {
+          Alert.alert('Exit Sudoku', 'Are you sure you want to exit the app?', [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Exit',
+              style: 'destructive',
+              onPress: () => BackHandler.exitApp(),
+            },
+          ]);
+          return true;
+        }
+      }
+
+      return false;
+    };
+
+    const backSubscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      onBackPress
+    );
+    return () => backSubscription.remove();
+  }, [currentScreen, currentTab]);
 
   // Update profile handler
   const handleUpdateProfile = async (updated: Partial<UserProfile>) => {
@@ -97,7 +144,8 @@ export default function App() {
     await clearGameState();
     setOngoingGame(null);
     setActiveBoard([]);
-    setCurrentScreen('HOME');
+    setCurrentScreen('MAIN');
+    setCurrentTab('HOME');
   };
 
   // Generate a new puzzle and launch game
@@ -245,32 +293,71 @@ export default function App() {
   };
 
   return (
-    <View style={styles.root}>
-      <ExpoStatusBar style="light" />
+    <View
+      style={[
+        styles.root,
+        { backgroundColor: theme.colors.background },
+      ]}
+    >
+      <ExpoStatusBar style={profile.themeMode === 'light' ? 'dark' : 'light'} />
 
       {/* Screen 1: Splash Screen */}
       {currentScreen === 'SPLASH' && (
-        <SplashScreen onFinish={() => setCurrentScreen('HOME')} />
-      )}
-
-      {/* Screen 2: Home Screen */}
-      {currentScreen === 'HOME' && (
-        <HomeScreen
-          profile={profile}
-          ongoingGame={ongoingGame}
-          onPlayGame={() => setShowDifficultyModal(true)}
-          onResumeGame={handleResumeGame}
-          onOpenProfileEdit={() => setShowProfileModal(true)}
-          onOpenSettings={() => setShowSettingsModal(true)}
+        <SplashScreen
+          onFinish={() => setCurrentScreen('MAIN')}
+          theme={theme}
         />
       )}
 
-      {/* Screen 3: Game Screen */}
+      {/* Screen 2: Main Tab Navigation (Home, Profile, Settings) */}
+      {currentScreen === 'MAIN' && (
+        <View style={styles.screenContainer}>
+          <View style={styles.tabContent}>
+            {currentTab === 'HOME' && (
+              <HomeScreen
+                profile={profile}
+                ongoingGame={ongoingGame}
+                theme={theme}
+                onSelectDifficulty={handleSelectDifficulty}
+                onResumeGame={handleResumeGame}
+                onNavigateTab={(tab) => setCurrentTab(tab)}
+              />
+            )}
+
+            {currentTab === 'PROFILE' && (
+              <ProfileScreen
+                profile={profile}
+                theme={theme}
+                onUpdateProfile={handleUpdateProfile}
+              />
+            )}
+
+            {currentTab === 'SETTINGS' && (
+              <SettingsScreen
+                profile={profile}
+                theme={theme}
+                onUpdateSettings={handleUpdateProfile}
+                onResetData={handleResetData}
+              />
+            )}
+          </View>
+
+          {/* Sleek Instagram-style Bottom Navigation Bar */}
+          <BottomNavBar
+            currentTab={currentTab}
+            onTabChange={(tab) => setCurrentTab(tab)}
+            theme={theme}
+          />
+        </View>
+      )}
+
+      {/* Screen 3: Fullscreen Sudoku Game */}
       {currentScreen === 'GAME' && (
         <GameScreen
           board={activeBoard}
           solutionBoard={activeSolution}
           difficulty={activeDifficulty}
+          theme={theme}
           initialMistakes={activeMistakes}
           initialTimerSeconds={activeTimerSeconds}
           initialHintsLeft={activeHintsLeft}
@@ -278,33 +365,20 @@ export default function App() {
           initialHistory={activeHistory}
           onBoardChange={handleBoardChange}
           onVictory={handleVictory}
-          onGoHome={() => setCurrentScreen('HOME')}
+          onGoHome={() => {
+            setCurrentScreen('MAIN');
+            setCurrentTab('HOME');
+          }}
           onOpenDifficultyModal={() => setShowDifficultyModal(true)}
           onRequestHintAd={handleRequestHintAd}
         />
       )}
 
-      {/* Profile Edit Modal */}
-      <ProfileEditModal
-        visible={showProfileModal}
-        profile={profile}
-        onSave={handleUpdateProfile}
-        onClose={() => setShowProfileModal(false)}
-      />
-
-      {/* Settings Modal */}
-      <SettingsModal
-        visible={showSettingsModal}
-        profile={profile}
-        onUpdateSettings={handleUpdateProfile}
-        onResetData={handleResetData}
-        onClose={() => setShowSettingsModal(false)}
-      />
-
       {/* Difficulty Selection / Ad-Wall Modal */}
       <DifficultyModal
         visible={showDifficultyModal}
         profile={profile}
+        theme={theme}
         currentDifficulty={activeDifficulty}
         onSelectDifficulty={handleSelectDifficulty}
         onClose={() => setShowDifficultyModal(false)}
@@ -315,6 +389,7 @@ export default function App() {
         <SimulatedAdModal
           visible={true}
           type={activeAd.type}
+          theme={theme}
           title={activeAd.title}
           durationSeconds={activeAd.durationSeconds}
           onComplete={activeAd.onComplete}
@@ -328,6 +403,11 @@ export default function App() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#090D16',
+  },
+  screenContainer: {
+    flex: 1,
+  },
+  tabContent: {
+    flex: 1,
   },
 });

@@ -9,15 +9,17 @@ import {
   Modal,
   useWindowDimensions,
   Platform,
-  Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Cell, MoveHistory, Difficulty } from '../types/game';
+import { AppTheme } from '../theme/theme';
 import { haptic } from '../utils/haptics';
 
 interface GameScreenProps {
   board: Cell[][];
   solutionBoard: number[][];
   difficulty: Difficulty;
+  theme: AppTheme;
   initialMistakes?: number;
   initialTimerSeconds?: number;
   initialHintsLeft?: number;
@@ -41,6 +43,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   board: initialBoard,
   solutionBoard,
   difficulty,
+  theme,
   initialMistakes = 0,
   initialTimerSeconds = 0,
   initialHintsLeft = 3,
@@ -390,57 +393,123 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     selectedCell ? board[selectedCell[0]][selectedCell[1]].value : 0;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" />
-
+    <SafeAreaView
+      style={[
+        styles.safeArea,
+        { backgroundColor: theme.colors.background },
+      ]}
+    >
       <View style={styles.container}>
-        {/* Top Header */}
+        {/* Top Header with Clean Back Button */}
         <View style={styles.header}>
           <TouchableOpacity
-            style={styles.homeBtn}
+            style={[
+              styles.backBtn,
+              {
+                backgroundColor: theme.colors.card,
+                borderColor: theme.colors.cardBorder,
+              },
+            ]}
             onPress={() => {
               haptic.selection();
               onGoHome();
             }}
             activeOpacity={0.7}
           >
-            <Text style={styles.homeBtnIcon}>⌂</Text>
-            <Text style={styles.homeBtnText}>Home</Text>
+            <Ionicons
+              name="chevron-back"
+              size={20}
+              color={theme.colors.text}
+            />
+            <Text style={[styles.backBtnText, { color: theme.colors.text }]}>
+              Home
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.difficultyBadge}
+            style={[
+              styles.difficultyBadge,
+              {
+                backgroundColor: theme.colors.card,
+                borderColor: theme.colors.primaryLight,
+              },
+            ]}
             onPress={() => {
               haptic.selection();
               onOpenDifficultyModal();
             }}
             activeOpacity={0.7}
           >
-            <Text style={styles.difficultyText}>{difficulty}</Text>
-            <Text style={styles.difficultyCaret}>▼</Text>
+            <Text
+              style={[
+                styles.difficultyText,
+                { color: theme.colors.primaryLight },
+              ]}
+            >
+              {difficulty}
+            </Text>
+            <Ionicons
+              name="chevron-down"
+              size={12}
+              color={theme.colors.primaryLight}
+            />
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.newGameBtn}
+            style={[
+              styles.newGameBtn,
+              {
+                backgroundColor: theme.colors.card,
+                borderColor: theme.colors.cardBorder,
+              },
+            ]}
             onPress={() => {
               haptic.selection();
               onOpenDifficultyModal();
             }}
             activeOpacity={0.7}
           >
-            <Text style={styles.newGameBtnText}>New Game</Text>
+            <Ionicons
+              name="refresh"
+              size={15}
+              color={theme.colors.textSecondary}
+            />
+            <Text
+              style={[
+                styles.newGameBtnText,
+                { color: theme.colors.textSecondary },
+              ]}
+            >
+              New
+            </Text>
           </TouchableOpacity>
         </View>
 
         {/* Status Bar: Mistakes & Timer with Pause */}
-        <View style={styles.statusBarCard}>
+        <View
+          style={[
+            styles.statusBarCard,
+            {
+              backgroundColor: theme.colors.card,
+              borderColor: theme.colors.cardBorder,
+            },
+          ]}
+        >
           <View style={styles.mistakesContainer}>
-            <Text style={styles.statusLabel}>Mistakes</Text>
-            <View style={styles.mistakesPill}>
+            <Text style={[styles.statusLabel, { color: theme.colors.textMuted }]}>
+              Mistakes
+            </Text>
+            <View
+              style={[
+                styles.mistakesPill,
+                { backgroundColor: theme.colors.surface },
+              ]}
+            >
               <Text
                 style={[
                   styles.mistakesValue,
-                  mistakes > 0 && styles.mistakesAlert,
+                  { color: theme.colors.text },
+                  mistakes > 0 && { color: theme.colors.error },
                 ]}
               >
                 {mistakes}/3
@@ -449,9 +518,23 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           </View>
 
           <View style={styles.timerContainer}>
-            <Text style={styles.statusLabel}>Time</Text>
-            <View style={styles.timerPill}>
-              <Text style={styles.timerText}>{formatTime(timerSeconds)}</Text>
+            <Text style={[styles.statusLabel, { color: theme.colors.textMuted }]}>
+              Time
+            </Text>
+            <View
+              style={[
+                styles.timerPill,
+                { backgroundColor: theme.colors.surface },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.timerText,
+                  { color: theme.colors.primaryLight },
+                ]}
+              >
+                {formatTime(timerSeconds)}
+              </Text>
               <TouchableOpacity
                 onPress={() => {
                   haptic.selection();
@@ -460,16 +543,28 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 style={styles.pauseBtn}
                 activeOpacity={0.6}
               >
-                <Text style={styles.pauseBtnIcon}>
-                  {isPaused ? '▶' : '⏸'}
-                </Text>
+                <Ionicons
+                  name={isPaused ? 'play' : 'pause'}
+                  size={14}
+                  color={theme.colors.textSecondary}
+                />
               </TouchableOpacity>
             </View>
           </View>
         </View>
 
-        {/* 9x9 Sudoku Board Container */}
-        <View style={[styles.boardWrapper, { width: gridWidth, height: gridWidth }]}>
+        {/* 9x9 Sudoku Board */}
+        <View
+          style={[
+            styles.boardWrapper,
+            {
+              width: gridWidth,
+              height: gridWidth,
+              backgroundColor: theme.colors.boardBackground,
+              borderColor: theme.colors.boardBorder,
+            },
+          ]}
+        >
           <View style={[styles.board, { width: gridWidth, height: gridWidth }]}>
             {board.map((row, rIdx) => (
               <View key={`row-${rIdx}`} style={styles.gridRow}>
@@ -497,6 +592,17 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                   const borderRightThick = cIdx % 3 === 2 && cIdx !== 8;
                   const borderBottomThick = rIdx % 3 === 2 && rIdx !== 8;
 
+                  let cellBg = theme.colors.cellDefault;
+                  if (cell.isError) cellBg = theme.colors.cellError;
+                  else if (isSelected) cellBg = theme.colors.cellSelected;
+                  else if (isSameNumber) cellBg = theme.colors.cellSameNumber;
+                  else if (isRelated) cellBg = theme.colors.cellRelated;
+
+                  let cellTextColor = theme.colors.userNumberText;
+                  if (cell.isError) cellTextColor = theme.colors.errorNumberText;
+                  else if (isSelected) cellTextColor = theme.colors.selectedNumberText;
+                  else if (cell.isInitial) cellTextColor = theme.colors.initialClueText;
+
                   return (
                     <TouchableOpacity
                       key={`cell-${rIdx}-${cIdx}`}
@@ -505,15 +611,16 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                         {
                           width: cellSize,
                           height: cellSize,
+                          backgroundColor: cellBg,
                           borderRightWidth: borderRightThick ? 2.5 : cIdx === 8 ? 0 : 0.8,
                           borderBottomWidth: borderBottomThick ? 2.5 : rIdx === 8 ? 0 : 0.8,
-                          borderRightColor: borderRightThick ? '#64748B' : '#2D3748',
-                          borderBottomColor: borderBottomThick ? '#64748B' : '#2D3748',
+                          borderRightColor: borderRightThick
+                            ? theme.colors.gridDividerThick
+                            : theme.colors.gridDividerThin,
+                          borderBottomColor: borderBottomThick
+                            ? theme.colors.gridDividerThick
+                            : theme.colors.gridDividerThin,
                         },
-                        isRelated && styles.cellRelated,
-                        isSameNumber && styles.cellSameNumber,
-                        isSelected && styles.cellSelected,
-                        cell.isError && styles.cellError,
                       ]}
                       onPress={() => handleCellSelect(rIdx, cIdx)}
                       activeOpacity={0.8}
@@ -522,11 +629,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                         <Text
                           style={[
                             styles.cellNumber,
-                            { fontSize: Math.floor(cellSize * 0.58) },
-                            cell.isInitial && styles.initialClueText,
-                            !cell.isInitial && styles.userNumberText,
-                            isSelected && styles.selectedCellNumberText,
-                            cell.isError && styles.errorNumberText,
+                            {
+                              fontSize: Math.floor(cellSize * 0.58),
+                              color: cellTextColor,
+                              fontWeight: cell.isInitial ? '800' : '700',
+                            },
                           ]}
                         >
                           {cell.value}
@@ -541,6 +648,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                   styles.noteText,
                                   {
                                     fontSize: Math.max(8, Math.floor(cellSize * 0.22)),
+                                    color: theme.colors.noteText,
                                     opacity: cell.notes.includes(n) ? 1 : 0,
                                   },
                                 ]}
@@ -560,18 +668,38 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
           {/* Pause Overlay */}
           {isPaused && (
-            <View style={styles.pauseOverlay}>
-              <Text style={styles.pauseOverlayIcon}>⏸</Text>
-              <Text style={styles.pauseOverlayTitle}>Game Paused</Text>
+            <View
+              style={[
+                styles.pauseOverlay,
+                {
+                  backgroundColor:
+                    theme.mode === 'dark'
+                      ? 'rgba(9, 13, 22, 0.96)'
+                      : 'rgba(241, 245, 249, 0.96)',
+                },
+              ]}
+            >
+              <Ionicons
+                name="pause-circle-outline"
+                size={48}
+                color={theme.colors.primaryLight}
+              />
+              <Text style={[styles.pauseOverlayTitle, { color: theme.colors.text }]}>
+                Game Paused
+              </Text>
               <TouchableOpacity
-                style={styles.resumeBtn}
+                style={[
+                  styles.resumeBtn,
+                  { backgroundColor: theme.colors.primary },
+                ]}
                 onPress={() => {
                   haptic.selection();
                   setIsPaused(false);
                 }}
                 activeOpacity={0.8}
               >
-                <Text style={styles.resumeBtnText}>▶  Resume</Text>
+                <Ionicons name="play" size={16} color="#FFFFFF" />
+                <Text style={styles.resumeBtnText}>Resume</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -579,29 +707,74 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
         {/* Action Buttons: Undo, Erase, Notes, Hint */}
         <View style={styles.actionRow}>
+          {/* Undo */}
           <TouchableOpacity
-            style={[styles.actionBtn, history.length === 0 && styles.actionBtnDisabled]}
+            style={[
+              styles.actionBtn,
+              {
+                backgroundColor: theme.colors.card,
+                borderColor: theme.colors.cardBorder,
+              },
+              history.length === 0 && styles.actionBtnDisabled,
+            ]}
             onPress={handleUndo}
             disabled={history.length === 0}
             activeOpacity={0.7}
           >
-            <Text style={styles.actionIcon}>↩</Text>
-            <Text style={styles.actionLabel}>Undo</Text>
+            <Ionicons
+              name="arrow-undo-outline"
+              size={18}
+              color={theme.colors.textSecondary}
+            />
+            <Text
+              style={[
+                styles.actionLabel,
+                { color: theme.colors.textSecondary },
+              ]}
+            >
+              Undo
+            </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.actionBtn}
-            onPress={handleErase}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.actionIcon}>⌫</Text>
-            <Text style={styles.actionLabel}>Erase</Text>
-          </TouchableOpacity>
-
+          {/* Erase */}
           <TouchableOpacity
             style={[
               styles.actionBtn,
-              isNotesMode && styles.actionBtnNotesActive,
+              {
+                backgroundColor: theme.colors.card,
+                borderColor: theme.colors.cardBorder,
+              },
+            ]}
+            onPress={handleErase}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="backspace-outline"
+              size={18}
+              color={theme.colors.textSecondary}
+            />
+            <Text
+              style={[
+                styles.actionLabel,
+                { color: theme.colors.textSecondary },
+              ]}
+            >
+              Erase
+            </Text>
+          </TouchableOpacity>
+
+          {/* Notes Toggle */}
+          <TouchableOpacity
+            style={[
+              styles.actionBtn,
+              {
+                backgroundColor: isNotesMode
+                  ? theme.colors.primarySubtle
+                  : theme.colors.card,
+                borderColor: isNotesMode
+                  ? theme.colors.primaryLight
+                  : theme.colors.cardBorder,
+              },
             ]}
             onPress={() => {
               haptic.selection();
@@ -610,21 +783,35 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             activeOpacity={0.7}
           >
             <View style={styles.notesIconContainer}>
-              <Text
-                style={[
-                  styles.actionIcon,
-                  isNotesMode && styles.actionIconActive,
-                ]}
-              >
-                ✎
-              </Text>
+              <Ionicons
+                name="create-outline"
+                size={18}
+                color={
+                  isNotesMode
+                    ? theme.colors.primaryLight
+                    : theme.colors.textSecondary
+                }
+              />
               <View
                 style={[
                   styles.notesToggleTag,
-                  isNotesMode && styles.notesToggleTagOn,
+                  {
+                    backgroundColor: isNotesMode
+                      ? theme.colors.primary
+                      : theme.colors.surface,
+                  },
                 ]}
               >
-                <Text style={styles.notesToggleTagText}>
+                <Text
+                  style={[
+                    styles.notesToggleTagText,
+                    {
+                      color: isNotesMode
+                        ? '#FFFFFF'
+                        : theme.colors.textMuted,
+                    },
+                  ]}
+                >
                   {isNotesMode ? 'ON' : 'OFF'}
                 </Text>
               </View>
@@ -632,25 +819,52 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             <Text
               style={[
                 styles.actionLabel,
-                isNotesMode && styles.actionLabelActive,
+                {
+                  color: isNotesMode
+                    ? theme.colors.primaryLight
+                    : theme.colors.textSecondary,
+                },
               ]}
             >
               Notes
             </Text>
           </TouchableOpacity>
 
+          {/* Hint with AD badge */}
           <TouchableOpacity
-            style={styles.actionBtn}
+            style={[
+              styles.actionBtn,
+              {
+                backgroundColor: theme.colors.card,
+                borderColor: theme.colors.cardBorder,
+              },
+            ]}
             onPress={handleHintPress}
             activeOpacity={0.7}
           >
             <View style={styles.hintBadgeWrapper}>
-              <Text style={styles.actionIcon}>💡</Text>
-              <View style={styles.adHintTag}>
+              <Ionicons
+                name="bulb-outline"
+                size={18}
+                color={theme.colors.warning}
+              />
+              <View
+                style={[
+                  styles.adHintTag,
+                  { backgroundColor: theme.colors.warning },
+                ]}
+              >
                 <Text style={styles.adHintTagText}>AD</Text>
               </View>
             </View>
-            <Text style={styles.actionLabel}>Hint</Text>
+            <Text
+              style={[
+                styles.actionLabel,
+                { color: theme.colors.textSecondary },
+              ]}
+            >
+              Hint
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -665,6 +879,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 key={`numpad-${num}`}
                 style={[
                   styles.numBtn,
+                  {
+                    backgroundColor: isCompleted
+                      ? theme.colors.surface
+                      : theme.colors.card,
+                    borderColor: theme.colors.cardBorder,
+                  },
                   isCompleted && styles.numBtnCompleted,
                 ]}
                 onPress={() => handleNumberPress(num)}
@@ -673,7 +893,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 <Text
                   style={[
                     styles.numBtnText,
-                    isCompleted && styles.numBtnTextCompleted,
+                    {
+                      color: isCompleted
+                        ? theme.colors.textMuted
+                        : theme.colors.text,
+                    },
                   ]}
                 >
                   {num}
@@ -681,7 +905,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 <Text
                   style={[
                     styles.numCountBadge,
-                    isCompleted && styles.numCountBadgeCompleted,
+                    {
+                      color: isCompleted
+                        ? theme.colors.success
+                        : theme.colors.primaryLight,
+                    },
                   ]}
                 >
                   {isCompleted ? '✓' : remaining}
@@ -699,29 +927,72 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           onRequestClose={() => setShowHintConfirmDialog(false)}
         >
           <View style={styles.modalBackdrop}>
-            <View style={styles.modalCard}>
-              <Text style={styles.modalEmoji}>💡</Text>
-              <Text style={styles.modalTitle}>Watch Ad for Hint?</Text>
-              <Text style={styles.modalSubtitle}>
-                Watch a short 5-second sponsor video to reveal the correct
-                number for your selected cell.
+            <View
+              style={[
+                styles.modalCard,
+                {
+                  backgroundColor: theme.colors.card,
+                  borderColor: theme.colors.cardBorder,
+                },
+              ]}
+            >
+              <View
+                style={[
+                  styles.dialogIconBox,
+                  { backgroundColor: theme.colors.warningSubtle },
+                ]}
+              >
+                <Ionicons
+                  name="bulb"
+                  size={28}
+                  color={theme.colors.warning}
+                />
+              </View>
+              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+                Watch Ad for Hint?
+              </Text>
+              <Text
+                style={[
+                  styles.modalSubtitle,
+                  { color: theme.colors.textSecondary },
+                ]}
+              >
+                Watch a short sponsor video to reveal the correct number for your
+                selected cell.
               </Text>
 
               <View style={styles.modalBtnRow}>
                 <TouchableOpacity
-                  style={styles.modalSecondaryBtn}
+                  style={[
+                    styles.modalSecondaryBtn,
+                    {
+                      backgroundColor: theme.colors.surface,
+                      borderColor: theme.colors.cardBorder,
+                    },
+                  ]}
                   onPress={() => setShowHintConfirmDialog(false)}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.modalSecondaryBtnText}>Cancel</Text>
+                  <Text
+                    style={[
+                      styles.modalSecondaryBtnText,
+                      { color: theme.colors.textSecondary },
+                    ]}
+                  >
+                    Cancel
+                  </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.modalPrimaryBtn}
+                  style={[
+                    styles.modalPrimaryBtn,
+                    { backgroundColor: theme.colors.primary },
+                  ]}
                   onPress={handleConfirmWatchAdForHint}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.modalPrimaryBtnText}>Watch Ad ▶</Text>
+                  <Ionicons name="play" size={14} color="#FFFFFF" />
+                  <Text style={styles.modalPrimaryBtnText}>Watch Ad</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -736,34 +1007,102 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           onRequestClose={() => {}}
         >
           <View style={styles.modalBackdrop}>
-            <View style={styles.modalCard}>
-              <Text style={styles.modalEmoji}>🎉</Text>
-              <Text style={styles.modalTitle}>Puzzle Solved!</Text>
-              <Text style={styles.modalSubtitle}>
+            <View
+              style={[
+                styles.modalCard,
+                {
+                  backgroundColor: theme.colors.card,
+                  borderColor: theme.colors.cardBorder,
+                },
+              ]}
+            >
+              <View
+                style={[
+                  styles.dialogIconBox,
+                  { backgroundColor: theme.colors.successSubtle },
+                ]}
+              >
+                <Ionicons
+                  name="trophy"
+                  size={32}
+                  color={theme.colors.success}
+                />
+              </View>
+              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+                Puzzle Solved!
+              </Text>
+              <Text
+                style={[
+                  styles.modalSubtitle,
+                  { color: theme.colors.textSecondary },
+                ]}
+              >
                 You conquered the{' '}
-                <Text style={styles.modalHighlight}>{difficulty}</Text> puzzle in{' '}
-                <Text style={styles.modalHighlight}>
+                <Text
+                  style={[
+                    styles.modalHighlight,
+                    { color: theme.colors.primaryLight },
+                  ]}
+                >
+                  {difficulty}
+                </Text>{' '}
+                puzzle in{' '}
+                <Text
+                  style={[
+                    styles.modalHighlight,
+                    { color: theme.colors.primaryLight },
+                  ]}
+                >
                   {formatTime(timerSeconds)}
                 </Text>{' '}
                 with{' '}
-                <Text style={styles.modalHighlight}>{mistakes}</Text> mistake
-                {mistakes === 1 ? '' : 's'}!
+                <Text
+                  style={[
+                    styles.modalHighlight,
+                    { color: theme.colors.primaryLight },
+                  ]}
+                >
+                  {mistakes}
+                </Text>{' '}
+                mistake{mistakes === 1 ? '' : 's'}!
               </Text>
 
               <View style={styles.modalBtnRow}>
                 <TouchableOpacity
-                  style={styles.modalSecondaryBtn}
+                  style={[
+                    styles.modalSecondaryBtn,
+                    {
+                      backgroundColor: theme.colors.surface,
+                      borderColor: theme.colors.cardBorder,
+                    },
+                  ]}
                   onPress={onGoHome}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.modalSecondaryBtnText}>Main Menu</Text>
+                  <Ionicons
+                    name="home-outline"
+                    size={16}
+                    color={theme.colors.textSecondary}
+                  />
+                  <Text
+                    style={[
+                      styles.modalSecondaryBtnText,
+                      { color: theme.colors.textSecondary },
+                    ]}
+                  >
+                    Home
+                  </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.modalPrimaryBtn}
+                  style={[
+                    styles.modalPrimaryBtn,
+                    { backgroundColor: theme.colors.primary },
+                  ]}
                   onPress={onOpenDifficultyModal}
                   activeOpacity={0.8}
                 >
+                  <Ionicons name="refresh" size={16} color="#FFFFFF" />
                   <Text style={styles.modalPrimaryBtnText}>New Puzzle</Text>
                 </TouchableOpacity>
               </View>
@@ -779,28 +1118,76 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           onRequestClose={() => {}}
         >
           <View style={styles.modalBackdrop}>
-            <View style={styles.modalCard}>
-              <Text style={styles.modalEmoji}>💔</Text>
-              <Text style={styles.modalTitle}>Game Over</Text>
-              <Text style={styles.modalSubtitle}>
+            <View
+              style={[
+                styles.modalCard,
+                {
+                  backgroundColor: theme.colors.card,
+                  borderColor: theme.colors.cardBorder,
+                },
+              ]}
+            >
+              <View
+                style={[
+                  styles.dialogIconBox,
+                  { backgroundColor: theme.colors.errorSubtle },
+                ]}
+              >
+                <Ionicons
+                  name="skull-outline"
+                  size={32}
+                  color={theme.colors.error}
+                />
+              </View>
+              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+                Game Over
+              </Text>
+              <Text
+                style={[
+                  styles.modalSubtitle,
+                  { color: theme.colors.textSecondary },
+                ]}
+              >
                 You accumulated 3 mistakes in this puzzle. Review your strategy
                 and try again!
               </Text>
 
               <View style={styles.modalBtnRow}>
                 <TouchableOpacity
-                  style={styles.modalSecondaryBtn}
+                  style={[
+                    styles.modalSecondaryBtn,
+                    {
+                      backgroundColor: theme.colors.surface,
+                      borderColor: theme.colors.cardBorder,
+                    },
+                  ]}
                   onPress={onGoHome}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.modalSecondaryBtnText}>Main Menu</Text>
+                  <Ionicons
+                    name="home-outline"
+                    size={16}
+                    color={theme.colors.textSecondary}
+                  />
+                  <Text
+                    style={[
+                      styles.modalSecondaryBtnText,
+                      { color: theme.colors.textSecondary },
+                    ]}
+                  >
+                    Home
+                  </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.modalPrimaryBtn}
+                  style={[
+                    styles.modalPrimaryBtn,
+                    { backgroundColor: theme.colors.primary },
+                  ]}
                   onPress={handleRestart}
                   activeOpacity={0.8}
                 >
+                  <Ionicons name="refresh" size={16} color="#FFFFFF" />
                   <Text style={styles.modalPrimaryBtnText}>Try Again</Text>
                 </TouchableOpacity>
               </View>
@@ -815,19 +1202,15 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#090D16',
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   container: {
     flex: 1,
-    backgroundColor: '#090D16',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
-
-  // Header Styles
   header: {
     width: '100%',
     flexDirection: 'row',
@@ -835,73 +1218,56 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 4,
   },
-  homeBtn: {
+  backBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E293B',
-    paddingHorizontal: 12,
+    paddingLeft: 6,
+    paddingRight: 12,
     paddingVertical: 6,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#334155',
-    gap: 6,
+    gap: 4,
   },
-  homeBtnIcon: {
-    color: '#38BDF8',
-    fontSize: 16,
-  },
-  homeBtnText: {
-    color: '#F8FAFC',
+  backBtnText: {
     fontSize: 13,
     fontWeight: '700',
   },
   difficultyBadge: {
-    backgroundColor: '#1E293B',
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#38BDF8',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
   difficultyText: {
-    color: '#38BDF8',
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
-  difficultyCaret: {
-    color: '#38BDF8',
-    fontSize: 8,
-  },
   newGameBtn: {
-    backgroundColor: '#1E293B',
-    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#334155',
+    gap: 4,
   },
   newGameBtnText: {
-    color: '#94A3B8',
     fontSize: 13,
     fontWeight: '600',
   },
-
-  // Status Bar
   statusBarCard: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#111827',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#1F2937',
     marginVertical: 4,
   },
   mistakesContainer: {
@@ -912,10 +1278,8 @@ const styles = StyleSheet.create({
   statusLabel: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#9CA3AF',
   },
   mistakesPill: {
-    backgroundColor: '#1F2937',
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 8,
@@ -923,10 +1287,6 @@ const styles = StyleSheet.create({
   mistakesValue: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#E5E7EB',
-  },
-  mistakesAlert: {
-    color: '#EF4444',
   },
   timerContainer: {
     flexDirection: 'row',
@@ -936,7 +1296,6 @@ const styles = StyleSheet.create({
   timerPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1F2937',
     paddingLeft: 10,
     paddingRight: 6,
     paddingVertical: 3,
@@ -947,72 +1306,33 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
-    color: '#38BDF8',
   },
   pauseBtn: {
     padding: 3,
     borderRadius: 4,
   },
-  pauseBtnIcon: {
-    fontSize: 12,
-    color: '#9CA3AF',
-  },
-
-  // 9x9 Board
   boardWrapper: {
     position: 'relative',
     borderRadius: 10,
     overflow: 'hidden',
-    backgroundColor: '#0F172A',
     borderWidth: 3,
-    borderColor: '#64748B',
     elevation: 6,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
   },
-  board: {
-    backgroundColor: '#0F172A',
-  },
+  board: {},
   gridRow: {
     flexDirection: 'row',
   },
   cell: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0F172A',
-  },
-  cellRelated: {
-    backgroundColor: '#1E293B',
-  },
-  cellSameNumber: {
-    backgroundColor: '#1E3A5F',
-  },
-  cellSelected: {
-    backgroundColor: '#2563EB',
-  },
-  cellError: {
-    backgroundColor: '#451A1A',
   },
   cellNumber: {
     fontWeight: '700',
   },
-  initialClueText: {
-    color: '#F8FAFC',
-    fontWeight: '800',
-  },
-  userNumberText: {
-    color: '#38BDF8',
-  },
-  selectedCellNumberText: {
-    color: '#FFFFFF',
-  },
-  errorNumberText: {
-    color: '#F87171',
-  },
-
-  // Notes mini-grid (3x3 inside cell)
   notesGrid: {
     width: '90%',
     height: '90%',
@@ -1028,45 +1348,36 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   noteText: {
-    color: '#94A3B8',
     fontWeight: '600',
   },
-
-  // Pause Overlay
   pauseOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(9, 13, 22, 0.94)',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
   },
-  pauseOverlayIcon: {
-    fontSize: 40,
-    color: '#38BDF8',
-  },
   pauseOverlayTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#F8FAFC',
   },
   resumeBtn: {
-    backgroundColor: '#2563EB',
-    paddingHorizontal: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 22,
     paddingVertical: 10,
     borderRadius: 12,
     marginTop: 6,
   },
   resumeBtnText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
   },
-
-  // Action Buttons
   actionRow: {
     width: '100%',
     flexDirection: 'row',
@@ -1076,36 +1387,19 @@ const styles = StyleSheet.create({
   actionBtn: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#111827',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#1F2937',
     minWidth: 68,
-  },
-  actionBtnNotesActive: {
-    backgroundColor: '#1E293B',
-    borderColor: '#38BDF8',
+    gap: 2,
   },
   actionBtnDisabled: {
     opacity: 0.35,
   },
-  actionIcon: {
-    fontSize: 18,
-    color: '#94A3B8',
-    marginBottom: 2,
-  },
-  actionIconActive: {
-    color: '#38BDF8',
-  },
   actionLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#94A3B8',
-  },
-  actionLabelActive: {
-    color: '#38BDF8',
   },
   notesIconContainer: {
     position: 'relative',
@@ -1115,27 +1409,22 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: -16,
-    backgroundColor: '#374151',
     borderRadius: 4,
     paddingHorizontal: 3,
     paddingVertical: 1,
   },
-  notesToggleTagOn: {
-    backgroundColor: '#2563EB',
-  },
   notesToggleTagText: {
     fontSize: 8,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: '800',
   },
   hintBadgeWrapper: {
     position: 'relative',
+    alignItems: 'center',
   },
   adHintTag: {
     position: 'absolute',
     top: -4,
     right: -14,
-    backgroundColor: '#F59E0B',
     paddingHorizontal: 3,
     paddingVertical: 1,
     borderRadius: 4,
@@ -1145,8 +1434,6 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#000000',
   },
-
-  // Number Pad
   numpadContainer: {
     width: '100%',
     flexDirection: 'row',
@@ -1157,38 +1444,24 @@ const styles = StyleSheet.create({
   numBtn: {
     flex: 1,
     aspectRatio: 0.72,
-    backgroundColor: '#1E293B',
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#334155',
     elevation: 2,
   },
   numBtnCompleted: {
-    backgroundColor: '#0F172A',
-    borderColor: '#1E293B',
     opacity: 0.45,
   },
   numBtnText: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#F8FAFC',
-  },
-  numBtnTextCompleted: {
-    color: '#64748B',
   },
   numCountBadge: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#38BDF8',
     marginTop: 2,
   },
-  numCountBadgeCompleted: {
-    color: '#10B981',
-  },
-
-  // Modals
   modalBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.75)',
@@ -1199,37 +1472,36 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxWidth: 340,
-    backgroundColor: '#111827',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#1F2937',
     padding: 24,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 8,
   },
-  modalEmoji: {
-    fontSize: 52,
-    marginBottom: 8,
+  dialogIconBox: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
   modalTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#F8FAFC',
     marginBottom: 8,
   },
   modalSubtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 20,
   },
   modalHighlight: {
-    color: '#38BDF8',
     fontWeight: '700',
   },
   modalBtnRow: {
@@ -1239,11 +1511,12 @@ const styles = StyleSheet.create({
   },
   modalPrimaryBtn: {
     flex: 1,
-    backgroundColor: '#2563EB',
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 6,
   },
   modalPrimaryBtnText: {
     color: '#FFFFFF',
@@ -1252,18 +1525,16 @@ const styles = StyleSheet.create({
   },
   modalSecondaryBtn: {
     flex: 1,
-    backgroundColor: '#1E293B',
     borderWidth: 1,
-    borderColor: '#334155',
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 6,
   },
   modalSecondaryBtnText: {
-    color: '#E2E8F0',
     fontSize: 14,
     fontWeight: '600',
   },
 });
-

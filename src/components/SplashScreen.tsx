@@ -4,16 +4,16 @@ import {
   Text,
   View,
   Animated,
-  useWindowDimensions,
 } from 'react-native';
+import { Logo } from '../../assets/Logo';
+import { AppTheme } from '../theme/theme';
 
 interface SplashScreenProps {
   onFinish: () => void;
+  theme: AppTheme;
 }
 
-export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
-  const { width } = useWindowDimensions();
-
+export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish, theme }) => {
   const scaleAnim = useRef(new Animated.Value(0.85)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -51,7 +51,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
     );
     pulseLoop.start();
 
-    // Transition to Home after 2.4 seconds
+    // Transition to Main after ~2.2 seconds
     const timer = setTimeout(() => {
       Animated.timing(opacityAnim, {
         toValue: 0,
@@ -69,7 +69,12 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
   }, [onFinish, opacityAnim, pulseAnim, scaleAnim]);
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: theme.colors.background },
+      ]}
+    >
       <Animated.View
         style={[
           styles.content,
@@ -79,63 +84,45 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
           },
         ]}
       >
-        {/* 3x3 Grid Logo Badge */}
-        <View style={styles.logoGrid}>
-          <View style={styles.logoRow}>
-            <View style={[styles.logoCell, styles.cellAccent]}>
-              <Text style={styles.cellDigit}>9</Text>
-            </View>
-            <View style={styles.logoCell}>
-              <Text style={styles.cellDigit}>2</Text>
-            </View>
-            <View style={styles.logoCell}>
-              <Text style={styles.cellDigit}>5</Text>
-            </View>
-          </View>
-          <View style={styles.logoRow}>
-            <View style={styles.logoCell}>
-              <Text style={styles.cellDigit}>7</Text>
-            </View>
-            <View style={[styles.logoCell, styles.cellCenter]}>
-              <Text style={[styles.cellDigit, styles.centerDigit]}>S</Text>
-            </View>
-            <View style={styles.logoCell}>
-              <Text style={styles.cellDigit}>1</Text>
-            </View>
-          </View>
-          <View style={styles.logoRow}>
-            <View style={styles.logoCell}>
-              <Text style={styles.cellDigit}>4</Text>
-            </View>
-            <View style={styles.logoCell}>
-              <Text style={styles.cellDigit}>8</Text>
-            </View>
-            <View style={[styles.logoCell, styles.cellAccent]}>
-              <Text style={styles.cellDigit}>3</Text>
-            </View>
-          </View>
+        {/* SVG Logo Component */}
+        <View style={styles.logoWrapper}>
+          <Logo size={110} primaryColor={theme.colors.primary} />
         </View>
 
-        <Text style={styles.appTitle}>SUDOKU</Text>
-        <Text style={styles.appSubtitle}>MASTER MIND PUZZLE</Text>
+        <Text style={[styles.appTitle, { color: theme.colors.text }]}>
+          SUDOKU
+        </Text>
+        <Text style={[styles.appSubtitle, { color: theme.colors.primaryLight }]}>
+          MASTER MIND PUZZLE
+        </Text>
 
         {/* Pulsing loading ring */}
         <Animated.View
           style={[
             styles.pulseRing,
             {
+              borderColor: `${theme.colors.primaryLight}55`,
               transform: [{ scale: pulseAnim }],
             },
           ]}
         >
-          <View style={styles.pulseDot} />
+          <View
+            style={[
+              styles.pulseDot,
+              { backgroundColor: theme.colors.primaryLight },
+            ]}
+          />
         </Animated.View>
 
-        <Text style={styles.loadingText}>Loading puzzle universe...</Text>
+        <Text style={[styles.loadingText, { color: theme.colors.textMuted }]}>
+          Loading puzzle universe...
+        </Text>
       </Animated.View>
 
       <View style={styles.footer}>
-        <Text style={styles.versionText}>v1.2.0 • Offline Ready</Text>
+        <Text style={[styles.versionText, { color: theme.colors.textMuted }]}>
+          v1.3.0 • Offline Ready
+        </Text>
       </View>
     </View>
   );
@@ -144,7 +131,6 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#090D16',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
@@ -153,62 +139,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  logoGrid: {
-    width: 108,
-    height: 108,
-    backgroundColor: '#111827',
-    borderRadius: 18,
-    borderWidth: 2,
-    borderColor: '#38BDF8',
-    padding: 6,
-    justifyContent: 'space-between',
-    elevation: 12,
-    shadowColor: '#38BDF8',
-    shadowOffset: { width: 0, height: 4 },
+  logoWrapper: {
+    marginBottom: 24,
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 16,
-    marginBottom: 24,
-  },
-  logoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  logoCell: {
-    width: 28,
-    height: 28,
-    backgroundColor: '#1E293B',
-    borderRadius: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cellAccent: {
-    backgroundColor: '#1E3A8A',
-  },
-  cellCenter: {
-    backgroundColor: '#2563EB',
-  },
-  cellDigit: {
-    color: '#94A3B8',
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  centerDigit: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '900',
+    elevation: 10,
   },
   appTitle: {
     fontSize: 32,
     fontWeight: '900',
     letterSpacing: 4,
-    color: '#F8FAFC',
     marginBottom: 4,
   },
   appSubtitle: {
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 2,
-    color: '#38BDF8',
     marginBottom: 40,
   },
   pulseRing: {
@@ -216,7 +164,6 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: '#38BDF855',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -225,12 +172,10 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#38BDF8',
   },
   loadingText: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#64748B',
   },
   footer: {
     position: 'absolute',
@@ -239,8 +184,6 @@ const styles = StyleSheet.create({
   versionText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#334155',
     letterSpacing: 0.5,
   },
 });
-
