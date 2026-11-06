@@ -133,3 +133,4 @@ export const lightTheme: AppTheme = {
     navInactive: '#94A3B8',
   },
 };
+
