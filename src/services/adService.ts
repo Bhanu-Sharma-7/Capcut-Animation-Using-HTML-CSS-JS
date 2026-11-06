@@ -1,20 +1,20 @@
-import { Platform } from 'react-native';
-import mobileAds, {
+import { Platform, NativeModules, TurboModuleRegistry } from 'react-native';
+import Constants, { ExecutionEnvironment, AppOwnership } from 'expo-constants';
+import type {
   RewardedAd,
   InterstitialAd,
-  AdEventType,
-  RewardedAdEventType,
-  TestIds,
+  RewardedAdEventType as RewardedAdEventTypeType,
+  AdEventType as AdEventTypeType,
 } from 'react-native-google-mobile-ads';
 import { Difficulty, AdType } from '../types/game';
 
-// AdMob Unit IDs
+// AdMob Production & Test Unit IDs
 const REWARDED_AD_UNIT = __DEV__
-  ? TestIds.REWARDED
+  ? 'ca-app-pub-3940256099942544/5224354917' // Google Official Test Rewarded ID
   : 'ca-app-pub-2081458619165865/6842837333';
 
 const INTERSTITIAL_AD_UNIT = __DEV__
-  ? TestIds.INTERSTITIAL
+  ? 'ca-app-pub-3940256099942544/1033173712' // Google Official Test Interstitial ID
   : 'ca-app-pub-2081458619165865/7979825030';
 
 let isInitialized = false;
@@ -25,19 +25,75 @@ let rewardedAdInstance: RewardedAd | null = null;
 let isRewardedLoaded = false;
 
 /**
- * Initialize Google Mobile Ads SDK (Native platforms only)
+ * Detect whether the native Google Mobile Ads module is supported and present.
+ * Returns false when running inside Expo Go, Web, or when binary lacks the native module.
  */
-export async function initializeMobileAds(): Promise<void> {
-  if (Platform.OS === 'web' || isInitialized) return;
+export function isNativeAdMobSupported(): boolean {
+  if (Platform.OS === 'web') {
+    return false;
+  }
+
+  // Check Expo Go environment
+  try {
+    if (
+      Constants.appOwnership === AppOwnership.Expo ||
+      Constants.appOwnership === 'expo' ||
+      Constants.executionEnvironment === ExecutionEnvironment.StoreClient
+    ) {
+      return false;
+    }
+  } catch {
+    // Continue to native module checks if constants check fails
+  }
+
+  // Check if native module is registered in the native binary
+  try {
+    const hasModule =
+      Boolean(NativeModules?.RNGoogleMobileAdsModule) ||
+      Boolean(TurboModuleRegistry?.get?.('RNGoogleMobileAdsModule'));
+
+    if (!hasModule) {
+      return false;
+    }
+  } catch {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Lazy getter for react-native-google-mobile-ads.
+ * Returns null in Expo Go or when native module is missing, preventing crashes.
+ */
+function getGoogleMobileAds(): typeof import('react-native-google-mobile-ads') | null {
+  if (!isNativeAdMobSupported()) {
+    return null;
+  }
 
   try {
-    await mobileAds().initialize();
+    // Dynamically require so that Expo Go never bundles the enforcing TurboModule
+    return require('react-native-google-mobile-ads');
+  } catch (error) {
+    console.warn('Native Google Mobile Ads module could not be required:', error);
+    return null;
+  }
+}
+
+/**
+ * Initialize Google Mobile Ads SDK (Native Standalone / Production builds only)
+ */
+export async function initializeMobileAds(): Promise<void> {
+  const gma = getGoogleMobileAds();
+  if (!gma || isInitialized) return;
+
+  try {
+    await gma.default().initialize();
     isInitialized = true;
-    // Preload initial ad instances
     preloadInterstitial();
     preloadRewarded();
   } catch (error) {
-    console.warn('Google Mobile Ads initialization notice:', error);
+    console.warn('Google Mobile Ads initialization warning:', error);
   }
 }
 
@@ -45,39 +101,28 @@ export async function initializeMobileAds(): Promise<void> {
  * Preload Interstitial Ad
  */
 export function preloadInterstitial(): void {
-  if (Platform.OS === 'web') return;
+  const gma = getGoogleMobileAds();
+  if (!gma) return;
 
   try {
-    interstitialAdInstance = InterstitialAd.createForAdRequest(
-      INTERSTITIAL_AD_UNIT,
-      {
-        requestNonPersonalizedAdsOnly: true,
-      }
-    );
+    const adUnitId = __DEV__ ? gma.TestIds.INTERSTITIAL : INTERSTITIAL_AD_UNIT;
+    interstitialAdInstance = gma.InterstitialAd.createForAdRequest(adUnitId, {
+      requestNonPersonalizedAdsOnly: true,
+    });
 
-    const unsubscribeLoaded = interstitialAdInstance.addAdEventListener(
-      AdEventType.LOADED,
-      () => {
-        isInterstitialLoaded = true;
-      }
-    );
+    interstitialAdInstance.addAdEventListener(gma.AdEventType.LOADED, () => {
+      isInterstitialLoaded = true;
+    });
 
-    const unsubscribeClosed = interstitialAdInstance.addAdEventListener(
-      AdEventType.CLOSED,
-      () => {
-        isInterstitialLoaded = false;
-        // Preload next
-        preloadInterstitial();
-      }
-    );
+    interstitialAdInstance.addAdEventListener(gma.AdEventType.CLOSED, () => {
+      isInterstitialLoaded = false;
+      preloadInterstitial();
+    });
 
-    const unsubscribeError = interstitialAdInstance.addAdEventListener(
-      AdEventType.ERROR,
-      (error) => {
-        console.warn('Interstitial ad error:', error);
-        isInterstitialLoaded = false;
-      }
-    );
+    interstitialAdInstance.addAdEventListener(gma.AdEventType.ERROR, (error) => {
+      console.warn('Interstitial ad load error:', error);
+      isInterstitialLoaded = false;
+    });
 
     interstitialAdInstance.load();
   } catch (error) {
@@ -90,25 +135,29 @@ export function preloadInterstitial(): void {
  * Preload Rewarded Ad
  */
 export function preloadRewarded(): void {
-  if (Platform.OS === 'web') return;
+  const gma = getGoogleMobileAds();
+  if (!gma) return;
 
   try {
-    rewardedAdInstance = RewardedAd.createForAdRequest(REWARDED_AD_UNIT, {
+    const adUnitId = __DEV__ ? gma.TestIds.REWARDED : REWARDED_AD_UNIT;
+    rewardedAdInstance = gma.RewardedAd.createForAdRequest(adUnitId, {
       requestNonPersonalizedAdsOnly: true,
     });
 
-    rewardedAdInstance.addAdEventListener(RewardedAdEventType.LOADED, () => {
-      isRewardedLoaded = true;
-    });
+    rewardedAdInstance.addAdEventListener(
+      gma.RewardedAdEventType.LOADED,
+      () => {
+        isRewardedLoaded = true;
+      }
+    );
 
-    rewardedAdInstance.addAdEventListener(AdEventType.CLOSED, () => {
+    rewardedAdInstance.addAdEventListener(gma.AdEventType.CLOSED, () => {
       isRewardedLoaded = false;
-      // Preload next
       preloadRewarded();
     });
 
-    rewardedAdInstance.addAdEventListener(AdEventType.ERROR, (error) => {
-      console.warn('Rewarded ad error:', error);
+    rewardedAdInstance.addAdEventListener(gma.AdEventType.ERROR, (error) => {
+      console.warn('Rewarded ad load error:', error);
       isRewardedLoaded = false;
     });
 
@@ -121,24 +170,27 @@ export function preloadRewarded(): void {
 
 /**
  * Show Rewarded Ad for in-game hint
- * - Falls back smoothly to simulated ad or direct reward if ad fails or on unsupported device
+ * - Uses real AdMob on standalone builds
+ * - Seamlessly falls back to simulated ad or direct reward in Expo Go or on load failure
  */
 export function showHintRewardedAd(
   onRewardEarned: () => void,
   onFallbackModal?: () => void
 ): void {
-  if (Platform.OS !== 'web' && rewardedAdInstance && isRewardedLoaded) {
+  const gma = getGoogleMobileAds();
+
+  if (gma && rewardedAdInstance && isRewardedLoaded) {
     let earned = false;
 
     const unsubEarned = rewardedAdInstance.addAdEventListener(
-      RewardedAdEventType.EARNED_REWARD,
+      gma.RewardedAdEventType.EARNED_REWARD,
       () => {
         earned = true;
       }
     );
 
     const unsubClosed = rewardedAdInstance.addAdEventListener(
-      AdEventType.CLOSED,
+      gma.AdEventType.CLOSED,
       () => {
         unsubEarned();
         unsubClosed();
@@ -150,7 +202,7 @@ export function showHintRewardedAd(
 
     try {
       rewardedAdInstance.show().catch((err) => {
-        console.warn('Failed to show real rewarded ad, executing fallback:', err);
+        console.warn('Failed to display real rewarded ad, activating fallback:', err);
         unsubEarned();
         unsubClosed();
         if (onFallbackModal) {
@@ -161,11 +213,11 @@ export function showHintRewardedAd(
       });
       return;
     } catch (err) {
-      console.warn('Exception showing rewarded ad:', err);
+      console.warn('Exception displaying rewarded ad:', err);
     }
   }
 
-  // Fallback to simulated ad or direct reward
+  // Graceful fallback for Expo Go or when ad is not cached
   if (onFallbackModal) {
     onFallbackModal();
   } else {
@@ -176,15 +228,18 @@ export function showHintRewardedAd(
 /**
  * Show Interstitial Ad before level start
  * - Used for Hard mode and every 5th Medium match
- * - Falls back smoothly if unavailable
+ * - Uses real AdMob on standalone builds
+ * - Seamlessly falls back to simulated ad or direct start in Expo Go or on load failure
  */
 export function showLevelInterstitialAd(
   onClosed: () => void,
   onFallbackModal?: () => void
 ): void {
-  if (Platform.OS !== 'web' && interstitialAdInstance && isInterstitialLoaded) {
+  const gma = getGoogleMobileAds();
+
+  if (gma && interstitialAdInstance && isInterstitialLoaded) {
     const unsubClosed = interstitialAdInstance.addAdEventListener(
-      AdEventType.CLOSED,
+      gma.AdEventType.CLOSED,
       () => {
         unsubClosed();
         onClosed();
@@ -193,7 +248,7 @@ export function showLevelInterstitialAd(
 
     try {
       interstitialAdInstance.show().catch((err) => {
-        console.warn('Failed to show real interstitial ad, executing fallback:', err);
+        console.warn('Failed to display real interstitial ad, activating fallback:', err);
         unsubClosed();
         if (onFallbackModal) {
           onFallbackModal();
@@ -203,11 +258,11 @@ export function showLevelInterstitialAd(
       });
       return;
     } catch (err) {
-      console.warn('Exception showing interstitial ad:', err);
+      console.warn('Exception displaying interstitial ad:', err);
     }
   }
 
-  // Fallback to simulated ad or direct play
+  // Graceful fallback for Expo Go or when ad is not cached
   if (onFallbackModal) {
     onFallbackModal();
   } else {
@@ -242,9 +297,9 @@ export function evaluateDifficultyAdRequirement(
       return {
         requiresAd: true,
         adType: 'INTERSTITIAL',
-        title: 'Google AdMob • Medium Match #5',
+        title: 'Sponsor Ad • Medium Match #5',
         durationSeconds: 4,
-        message: `Match #${nextMediumMatchNumber} requires a sponsor ad before starting.`,
+        message: `Match #${nextMediumMatchNumber} requires an ad before starting.`,
       };
     }
     const remainingBeforeAd = 5 - (nextMediumMatchNumber % 5);
@@ -260,9 +315,9 @@ export function evaluateDifficultyAdRequirement(
     return {
       requiresAd: true,
       adType: 'INTERSTITIAL',
-      title: 'Google AdMob • Hard Mode',
+      title: 'Sponsor Ad • Hard Mode',
       durationSeconds: 4,
-      message: 'Hard mode requires a sponsor ad before starting.',
+      message: 'Hard mode requires an ad before starting.',
     };
   }
 
@@ -272,7 +327,7 @@ export function evaluateDifficultyAdRequirement(
 export function getHintRewardedAdConfig() {
   return {
     adType: 'REWARDED' as AdType,
-    title: 'Google AdMob • Rewarded Hint',
+    title: 'Sponsor Ad • Rewarded Hint',
     durationSeconds: 5,
     message: 'Watch a short rewarded ad to unlock a free hint.',
   };
