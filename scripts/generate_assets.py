@@ -222,3 +222,4 @@ if __name__ == '__main__':
     # Also generate favicon
     generate_icon('assets/favicon.png', 48)
     print('All production assets successfully created!')
+

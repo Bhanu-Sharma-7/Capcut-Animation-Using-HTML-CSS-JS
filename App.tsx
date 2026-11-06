@@ -28,8 +28,10 @@ import {
   clearGameState,
 } from './src/utils/storage';
 import {
+  initializeMobileAds,
   evaluateDifficultyAdRequirement,
-  getHintRewardedAdConfig,
+  showHintRewardedAd,
+  showLevelInterstitialAd,
 } from './src/services/adService';
 
 import { SplashScreen } from './src/components/SplashScreen';
@@ -63,16 +65,20 @@ export default function App() {
   // Modals Visibility
   const [showDifficultyModal, setShowDifficultyModal] = useState<boolean>(false);
 
-  // Simulated Ad State
+  // Simulated Ad State (Used for fallback / simulation)
   const [activeAd, setActiveAd] = useState<AdRequest | null>(null);
 
   // Resolved dynamic theme
   const theme: AppTheme =
     profile.themeMode === 'light' ? lightTheme : darkTheme;
 
-  // Load profile and stored ongoing game on initial mount
+  // Load profile and initialize Mobile Ads on initial mount
   useEffect(() => {
     async function init() {
+      // 1. Initialize Google Mobile Ads SDK & preload initial ads
+      initializeMobileAds();
+
+      // 2. Load user profile and state
       const loadedProfile = await loadUserProfile();
       setProfile(loadedProfile);
       setHapticsEnabled(loadedProfile.hapticsEnabled);
@@ -187,7 +193,7 @@ export default function App() {
     setCurrentScreen('GAME');
   }, []);
 
-  // Handle difficulty selection with Ad-wall logic
+  // Handle difficulty selection with official AdMob Interstitial logic
   const handleSelectDifficulty = async (diff: Difficulty) => {
     setShowDifficultyModal(false);
 
@@ -199,17 +205,27 @@ export default function App() {
 
     const adDecision = evaluateDifficultyAdRequirement(diff, nextMediumMatch);
 
-    if (adDecision.requiresAd && adDecision.adType) {
-      // Trigger simulated Interstitial ad
-      setActiveAd({
-        type: adDecision.adType,
-        title: adDecision.title || 'Sponsor Ad',
-        durationSeconds: adDecision.durationSeconds || 4,
-        onComplete: () => {
-          setActiveAd(null);
-          launchNewGame(diff);
-        },
-      });
+    if (adDecision.requiresAd) {
+      // Trigger official Google Mobile Ads Interstitial with fallback
+      showLevelInterstitialAd(
+        () => launchNewGame(diff),
+        () => {
+          // Fallback simulation modal if real ad fails to load or on unsupported device
+          setActiveAd({
+            type: 'INTERSTITIAL',
+            title: adDecision.title || 'Google AdMob • Interstitial',
+            durationSeconds: adDecision.durationSeconds || 4,
+            onComplete: () => {
+              setActiveAd(null);
+              launchNewGame(diff);
+            },
+            onCancel: () => {
+              setActiveAd(null);
+              launchNewGame(diff);
+            },
+          });
+        }
+      );
     } else {
       // Direct free entry
       launchNewGame(diff);
@@ -275,21 +291,26 @@ export default function App() {
     setOngoingGame(null);
   };
 
-  // Rewarded Ad flow for in-game hint
-  const handleRequestHintAd = (onAdCompleted: () => void) => {
-    const config = getHintRewardedAdConfig();
-    setActiveAd({
-      type: config.adType,
-      title: config.title,
-      durationSeconds: config.durationSeconds,
-      onComplete: () => {
-        setActiveAd(null);
-        onAdCompleted();
-      },
-      onCancel: () => {
-        setActiveAd(null);
-      },
-    });
+  // Official AdMob Rewarded Ad flow for in-game hint
+  const handleRequestHintAd = (onRewardEarned: () => void) => {
+    showHintRewardedAd(
+      () => onRewardEarned(),
+      () => {
+        // Fallback simulation modal if real ad fails to load or on unsupported device
+        setActiveAd({
+          type: 'REWARDED',
+          title: 'Google AdMob • Rewarded Hint',
+          durationSeconds: 5,
+          onComplete: () => {
+            setActiveAd(null);
+            onRewardEarned();
+          },
+          onCancel: () => {
+            setActiveAd(null);
+          },
+        });
+      }
+    );
   };
 
   return (
@@ -384,7 +405,7 @@ export default function App() {
         onClose={() => setShowDifficultyModal(false)}
       />
 
-      {/* Simulated AdMob Ad Modal (Interstitial & Rewarded) */}
+      {/* Simulated AdMob Ad Modal (Used as resilient fallback) */}
       {activeAd && (
         <SimulatedAdModal
           visible={true}
