@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - Sudoku Offline Puzzle</title>
+  <style>
+    :root {
+      --bg: #090D16;
+      --card-bg: #111827;
+      --border: #1F2937;
+      --text: #F8FAFC;
+      --text-muted: #94A3B8;
+      --primary: #38BDF8;
+      --primary-hover: #0284C7;
+      --accent-badge: #1E3A8A;
+      --success: #10B981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      padding: 32px 16px;
+    }
+
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px 32px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 24px 18px;
+      }
+    }
+
+    .header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 24px;
+      margin-bottom: 28px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: var(--accent-badge);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .meta {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-top: 32px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    p {
+      color: #CBD5E1;
+      font-size: 14.5px;
+      margin-bottom: 14px;
+    }
+
+    ul {
+      list-style-type: none;
+      padding-left: 0;
+      margin-bottom: 16px;
+    }
+
+    li {
+      color: #CBD5E1;
+      font-size: 14px;
+      padding: 6px 0 6px 20px;
+      position: relative;
+    }
+
+    li::before {
+      content: "•";
+      color: var(--primary);
+      font-weight: bold;
+      position: absolute;
+      left: 4px;
+      top: 4px;
+      font-size: 18px;
+    }
+
+    .highlight-card {
+      background: #0F172A;
+      border: 1px solid #334155;
+      border-left: 4px solid var(--primary);
+      border-radius: 10px;
+      padding: 16px;
+      margin: 18px 0;
+    }
+
+    .highlight-card p {
+      margin-bottom: 0;
+      font-size: 14px;
+      color: #E2E8F0;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      margin: 16px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13.5px;
+    }
+
+    th, td {
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+    }
+
+    th {
+      background: #1E293B;
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    td {
+      color: #CBD5E1;
+    }
+
+    a {
+      color: var(--primary);
+      text-decoration: underline;
+      transition: color 0.2s;
+    }
+
+    a:hover {
+      color: var(--primary-hover);
+    }
+
+    .footer {
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+      margin-top: 36px;
+      text-align: center;
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+
+    .developer-box {
+      background: #1E293B;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 12px;
+      font-size: 13.5px;
+    }
+
+    .developer-box strong {
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <span class="badge">Official Legal Document</span>
+      <h1>Privacy Policy for Sudoku Offline Puzzle</h1>
+      <p class="meta">
+        <strong>Application:</strong> Sudoku Offline Puzzle (Sudoku)<br>
+        <strong>Package Name:</strong> com.bhanusharma.sudokuoffline<br>
+        <strong>Effective Date:</strong> November 7, 2026<br>
+        <strong>Last Updated:</strong> November 7, 2026
+      </p>
+    </div>
+
+    <h2>1. Introduction</h2>
+    <p>
+      Welcome to <strong>Sudoku Offline Puzzle</strong> ("the Application", "we", "our", or "us"), developed by <strong>Bhanu Sharma</strong>.
+      We are dedicated to respecting and protecting the privacy of our users. This Privacy Policy clarifies how user information is handled, what data is processed, and our strict commitment to offline gameplay and transparency.
+    </p>
+    <p>
+      By downloading, installing, or playing the Application, you agree to the collection and handling of information strictly in accordance with this policy.
+    </p>
+
+    <h2>2. Offline Processing & Zero First-Party Data Collection</h2>
+    <div class="highlight-card">
+      <p>
+        <strong>100% On-Device Game Processing:</strong> Sudoku Offline Puzzle is designed to operate completely offline. The core puzzle generation engine (backtracking algorithm), board solver, pencil notes system, completion timer, and career statistics are computed exclusively on your device.
+      </p>
+    </div>
+    <p>
+      We do <strong>not</strong> operate any private backends, databases, or user accounts. Specifically:
+    </p>
+    <ul>
+      <li>We do <strong>not</strong> collect or store your personal name, email address, phone number, contacts, or real identity.</li>
+      <li>Your chosen in-game player name, avatar badge, total games won, win streak, personal best solve times, and ongoing board state are saved strictly in your device's sandboxed local storage (via AsyncStorage) and <strong>never</strong> leave your device to any proprietary server.</li>
+      <li>No account creation, sign-in, or registration is required to enjoy all features of the game.</li>
+    </ul>
+
+    <h2>3. Third-Party Advertising (Google AdMob)</h2>
+    <p>
+      To support the ongoing free development and maintenance of Sudoku Offline Puzzle, the Application integrates the <strong>Google Mobile Ads SDK (AdMob)</strong>.
+      AdMob delivers optional rewarded video ads (e.g., to voluntarily reveal an in-game hint) and periodic interstitial sponsor ads between games.
+    </p>
+    <p>
+      Google Mobile Ads may automatically collect, process, and share specific pseudonymous and device-level information for advertising, analytics, and fraud prevention purposes. This data is handled in encrypted transit (HTTPS/TLS) and may include:
+    </p>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Data Category</th>
+            <th>Data Elements</th>
+            <th>Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Device Identifiers</strong></td>
+            <td>Google Advertising ID (GAID), Android ID, OS version, device model</td>
+            <td>Ad delivery, impression measurement, frequency capping, fraud prevention</td>
+          </tr>
+          <tr>
+            <td><strong>Approximate Location</strong></td>
+            <td>Coarse location derived from IP address</td>
+            <td>Serving region-appropriate sponsor advertisements</td>
+          </tr>
+          <tr>
+            <td><strong>App & Ad Diagnostics</strong></td>
+            <td>Ad views, click interactions, crash logs, performance metrics</td>
+            <td>SDK stability, troubleshooting, and ad delivery analytics</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      For comprehensive details on how Google processes and protects advertising data, please review:
+    </p>
+    <ul>
+      <li><a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google Privacy Policy</a></li>
+      <li><a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer">How Google uses information from sites or apps that use our services</a></li>
+    </ul>
+
+    <h2>4. Android Permissions Requested</h2>
+    <p>
+      The Application requests only the minimal technical permissions required for ad delivery and tactile polish:
+    </p>
+    <ul>
+      <li><strong>android.permission.INTERNET:</strong> Allows the Google Mobile Ads SDK to fetch and display sponsor ads when an active internet connection is present.</li>
+      <li><strong>android.permission.ACCESS_NETWORK_STATE:</strong> Enables the ad service to detect whether the device is connected to Wi-Fi or mobile data before making ad requests.</li>
+      <li><strong>com.google.android.gms.permission.AD_ID:</strong> Required on Android 13+ (API level 33+) by Google Play Services to access the device's advertising identifier for ad attribution.</li>
+      <li><strong>android.permission.VIBRATE:</strong> Used solely to provide subtle tactile haptic feedback during number placement, errors, and puzzle completion.</li>
+    </ul>
+
+    <h2>5. Children's Privacy (COPPA Compliance)</h2>
+    <p>
+      Sudoku Offline Puzzle is intended for general audiences aged <strong>13 and older</strong>. We do not knowingly collect, solicit, or share personally identifiable information from children under the age of 13.
+      If you are a parent or legal guardian and believe that your child has provided us with personal information, please contact us immediately, and we will take prompt steps to address the concern.
+    </p>
+
+    <h2>6. User Rights & How to Opt Out of Personalized Ads</h2>
+    <p>
+      You have full control over advertising personalization and tracking on your Android device. You can opt out of personalized advertisements or reset your Google Advertising ID at any time:
+    </p>
+    <ul>
+      <li>Open your device's <strong>Settings</strong> app.</li>
+      <li>Navigate to <strong>Google</strong> &rarr; <strong>Ads</strong> (or <strong>Privacy</strong> &rarr; <strong>Ads</strong>).</li>
+      <li>Tap <strong>"Reset advertising ID"</strong> to generate a fresh anonymous identifier, or select <strong>"Delete advertising ID"</strong> to opt out of interest-based ads entirely.</li>
+    </ul>
+    <p>
+      Additionally, you can play Sudoku Offline Puzzle completely offline (e.g., in Airplane Mode). When offline, the app operates without connecting to ad servers, while granting uninterrupted access to all difficulty tiers and game mechanics.
+    </p>
+
+    <h2>7. Data Security</h2>
+    <p>
+      The security of your device is of paramount importance to us. Any network requests made by integrated third-party SDKs (Google Mobile Ads) utilize industry-standard Transport Layer Security (TLS/HTTPS) encryption to protect data in transit against unauthorized interception.
+    </p>
+
+    <h2>8. Changes to This Privacy Policy</h2>
+    <p>
+      We may periodically update this Privacy Policy to reflect app updates, legal requirements, or operational changes. Any modifications will be posted directly on this page with an updated "Last Updated" date. We encourage users to review this page periodically for any changes.
+    </p>
+
+    <h2>9. Contact Information</h2>
+    <p>
+      If you have any questions, feedback, or concerns regarding this Privacy Policy or our data practices, please reach out directly:
+    </p>
+    <div class="developer-box">
+      <p><strong>Developer:</strong> Bhanu Sharma</p>
+      <p><strong>Application:</strong> Sudoku Offline Puzzle (com.bhanusharma.sudokuoffline)</p>
+      <p><strong>Support Email:</strong> <a href="mailto:bhanusharma14581@gmail.com">bhanusharma14581@gmail.com</a></p>
+    </div>
+
+    <div class="footer">
+      <p>&copy; 2026 Bhanu Sharma. All rights reserved.</p>
+      <p>Sudoku Offline Puzzle &bull; Clean, Minimalist, Offline Logic Game</p>
+    </div>
+  </div>
+</body>
+</html>
