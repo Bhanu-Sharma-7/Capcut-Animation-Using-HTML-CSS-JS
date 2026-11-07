@@ -38,6 +38,12 @@
           "iosAppId": "ca-app-pub-2081458619165865~8668868980"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "5d9291c2-2bfe-4a1c-a25e-a9bb9c875ca4"
+      }
+    },
+    "owner": "bhanu_sharma"
   }
 }
